@@ -1,0 +1,1 @@
+A collaboration between my desire for increasing amounts of money and microtransactions, Fartifact offers the deepest payment system and highest-fidelity money hole ever seen in a trading card game.
