@@ -1,0 +1,8 @@
+/Fartifact/Saved
+/Fartifact/Fartifact.sln
+/Fartifact/Intermediate
+/Fartifact/Binaries
+/Fartifact/.vs
+*.sln
+*.sdf
+*.suo 
