@@ -13,10 +13,17 @@ class AFartifactPlayerController : public APlayerController
 
 public:
 	AFartifactPlayerController();
+	
+	UFUNCTION(Server, Reliable, WithValidation)
+	void CommandToServer(const FString& ACommand);
+
+	void PreSendCommand(FString ACommand);
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
+
+	virtual void BeginPlay() override;
 
 	// Begin PlayerController interface
 	virtual void PlayerTick(float DeltaTime) override;
@@ -29,6 +36,8 @@ protected:
 	/** Navigate player to the current mouse cursor location. */
 	void MoveToMouseCursor();
 
+
+
 	/** Navigate player to the current touch location. */
 	void MoveToTouchLocation(const ETouchIndex::Type FingerIndex, const FVector Location);
 	
@@ -38,6 +47,17 @@ protected:
 	/** Input handlers for SetDestination action. */
 	void OnSetDestinationPressed();
 	void OnSetDestinationReleased();
+
+	void ToggleConsole();
+
+protected:
+	TSubclassOf<class UUserWidget> ConsoleClass = nullptr;
+	class AFartifactGameStateBase* MyGameState = nullptr;
+	class UWorld* MyWorld = nullptr;
+
+public:
+	class UConsoleWidget* ConsoleWidget = nullptr;
+
 };
 
 

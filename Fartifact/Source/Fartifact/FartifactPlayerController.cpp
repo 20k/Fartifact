@@ -5,12 +5,83 @@
 #include "Runtime/Engine/Classes/Components/DecalComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "FartifactCharacter.h"
+#include "UObject/ConstructorHelpers.h"
+
+#include "FartifactGameStateBase.h"
+#include "Widgets/ConsoleWidget.h"
 #include "Engine/World.h"
 
 AFartifactPlayerController::AFartifactPlayerController()
 {
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
+
+	ConstructorHelpers::FClassFinder<UUserWidget> ConsoleWidgetBPClass(TEXT("/Game/WidgetBlueprints/ConsoleWidget"));
+	ConsoleClass = ConsoleWidgetBPClass.Class;
+}
+
+void AFartifactPlayerController::BeginPlay()
+{
+
+	MyWorld = GetWorld();
+	if (!MyWorld)
+		return;
+
+	MyGameState = Cast<AFartifactGameStateBase>(MyWorld->GetGameState());
+
+
+	if (IsLocalPlayerController())
+	{
+		if (ConsoleClass != nullptr)
+		{
+			ConsoleWidget = Cast<UConsoleWidget>(CreateWidget<UUserWidget>(this, ConsoleClass));
+			if (ConsoleWidget)
+				ConsoleWidget->AddToViewport();
+
+		}
+
+	}
+
+	
+}
+
+void AFartifactPlayerController::PreSendCommand(FString ACommand)
+{
+	
+	if (!MyWorld || !MyGameState)
+		return;
+
+
+	if (GetPawn()->Role == ROLE_Authority)
+	{
+		FString ExtraString = "Server: ";
+		ExtraString.Append(ACommand);
+
+
+		MyGameState->CommandToMulti(ExtraString);
+		
+	}
+	else
+	{
+		FString ExtraString = "Client: ";
+		ExtraString.Append(ACommand);
+
+		CommandToServer(ExtraString);
+	}
+}
+
+void AFartifactPlayerController::CommandToServer_Implementation(const FString& ACommand)
+{
+	if (MyGameState)
+	{
+		MyGameState->CommandToMulti(ACommand);
+	}
+
+}
+
+bool AFartifactPlayerController::CommandToServer_Validate(const FString& ACommand)
+{
+	return true;
 }
 
 void AFartifactPlayerController::PlayerTick(float DeltaTime)
@@ -31,6 +102,7 @@ void AFartifactPlayerController::SetupInputComponent()
 
 	InputComponent->BindAction("SetDestination", IE_Pressed, this, &AFartifactPlayerController::OnSetDestinationPressed);
 	InputComponent->BindAction("SetDestination", IE_Released, this, &AFartifactPlayerController::OnSetDestinationReleased);
+	InputComponent->BindAction("ToggleConsole", IE_Released, this, &AFartifactPlayerController::ToggleConsole);
 
 	// support touch devices 
 	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AFartifactPlayerController::MoveToTouchLocation);
@@ -109,4 +181,21 @@ void AFartifactPlayerController::OnSetDestinationReleased()
 {
 	// clear flag to indicate we should stop updating the destination
 	bMoveToMouseCursor = false;
+}
+
+void AFartifactPlayerController::ToggleConsole()
+{
+	if (ConsoleWidget != nullptr)
+	{
+		//ConsoleWidget->AddToViewport();
+
+
+		//if (!ConsoleWidget->IsInViewport())
+		//{
+		//}
+		//else
+		//{
+		//	//ConsoleWidget->RemoveFromViewport();
+		//}
+	}
 }

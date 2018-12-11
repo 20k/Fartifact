@@ -4,11 +4,15 @@
 #include "FartifactPlayerController.h"
 #include "FartifactCharacter.h"
 #include "UObject/ConstructorHelpers.h"
+#include "FartifactGameStateBase.h"
 
 AFartifactGameMode::AFartifactGameMode()
 {
+	GameStateClass = AFartifactGameStateBase::StaticClass();
+
 	// use our custom PlayerController class
 	PlayerControllerClass = AFartifactPlayerController::StaticClass();
+
 
 	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/TopDownCPP/Blueprints/TopDownCharacter"));
