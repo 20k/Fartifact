@@ -13,6 +13,8 @@ class AFartifactGameMode : public AGameModeBase
 
 public:
 	AFartifactGameMode();
+
+	void BeginPlay() override;
 };
 
 

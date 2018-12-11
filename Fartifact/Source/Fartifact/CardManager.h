@@ -13,25 +13,38 @@ struct Card
 
 	enum class type
 	{
-		AMERICAN_DOLLAR = 0,
-		POUND = 1,
-		DONG = 2,
-		RUBLE = 3,
-		EURO = 4,
-		PESO = 5,
-		RUPEE = 6,
-		BUTTONS = 7,
-		CANADIAN_DOLLAR = 8,
-		AUSTRALIAN_DOLLARYDOO = 9,
-		ZIMBABWEAN_DOLLARS = 10,
-		YUAN = 11,
+		UNKNOWN = 0,
+		AMERICAN_DOLLAR,
+		POUND,
+		DONG,
+		RUBLE,
+		EURO,
+		PESO,
+		RUPEE,
+		BUTTONS,
+		CANADIAN_DOLLAR,
+		AUSTRALIAN_DOLLARYDOO,
+		ZIMBABWEAN_DOLLARS,
+		YUAN,
 		COUNT,
 		NONE
 	};
 
-	std::string get_short_name();
+	enum class visibility
+	{
+		OWNER, ///eg hand, face down cards on the board owned by someone
+		ALL, ///visible to everyone, face up card
+		NONE, ///not visible to anyone, face down neutral
+	};
+
+	std::string GetShortName();
 
 	type which = type::NONE;
+	visibility visible = visibility::NONE;
+	uint64_t owner_id = 0; ///placeholder
+
+	bool IsOwnedBy(uint64_t puser_id);
+	bool IsVisibleTo(uint64_t puser_id);
 };
 
 /**
@@ -51,11 +64,16 @@ public:
 	Card Fetch(uint32_t index);
 	void Clear();
 
-	static CardManager Merge(const CardManager& c1, const CardManager& c2);
+	///returns exactly the same deck of cards, except hides the ones that owner_id is not meant to be able to see
+	CardManager HideByVisibility(uint64_t powner_id);
+
+	std::string Debug();
 
 	template<typename T>
 	void Shuffle(T& engine)
 	{
 		std::shuffle(std::begin(cards), std::end(cards), engine);
 	}
+
+	static CardManager Merge(const CardManager& c1, const CardManager& c2);
 };

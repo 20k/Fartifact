@@ -5,6 +5,7 @@
 
 std::vector<std::string> Card::short_names
 {
+	"X",
 	"$",
 	"£",
 	"₫",
@@ -21,7 +22,7 @@ std::vector<std::string> Card::short_names
 	"ERR"
 };
 
-std::string Card::get_short_name()
+std::string Card::GetShortName()
 {
 	int itype = (int)which;
 
@@ -29,6 +30,25 @@ std::string Card::get_short_name()
 		throw std::runtime_error("Bad type in card get_short_name");
 
 	return short_names[itype];
+}
+
+bool Card::IsOwnedBy(uint64_t puser_id)
+{
+	return owner_id == puser_id;
+}
+
+bool Card::IsVisibleTo(uint64_t puser_id)
+{
+	if (visible == visibility::ALL)
+		return true;
+
+	if (visible == visibility::NONE)
+		return false;
+
+	if (visible == visibility::OWNER)
+		return owner_id == puser_id;
+
+	throw std::runtime_error("Unrecognised visibility option");
 }
 
 CardManager::CardManager()
@@ -74,6 +94,35 @@ Card CardManager::Fetch(uint32_t index)
 void CardManager::Clear()
 {
 	cards.clear();
+}
+
+CardManager CardManager::HideByVisibility(uint64_t puser_id)
+{
+	CardManager ret;
+
+	for (Card c : cards)
+	{
+		if (!c.IsVisibleTo(puser_id))
+		{
+			c.which = Card::type::UNKNOWN;
+		}
+
+		ret.Add(c);
+	}
+
+	return ret;
+}
+
+std::string CardManager::Debug()
+{
+	std::string accum;
+
+	for (Card& c : cards)
+	{
+		accum += c.GetShortName();
+	}
+
+	return accum;
 }
 
 CardManager CardManager::Merge(const CardManager& c1, const CardManager& c2)
