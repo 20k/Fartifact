@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿// copyrite notuc ur a bum
 
 #pragma once
 
@@ -35,11 +35,27 @@ struct Card
 };
 
 /**
- * 
+ * Collection of cards, a logical pile of some description
  */
 class FARTIFACT_API CardManager
 {
 public:
 	CardManager();
 	~CardManager();
+
+	std::vector<Card> cards;
+
+	void Add(const Card& c);
+	void Add(const std::vector<Card>& pcards);
+	Card Remove(uint32_t index);
+	Card Fetch(uint32_t index);
+	void Clear();
+
+	static CardManager Merge(const CardManager& c1, const CardManager& c2);
+
+	template<typename T>
+	void Shuffle(T& engine)
+	{
+		std::shuffle(std::begin(cards), std::end(cards), engine);
+	}
 };
