@@ -24,15 +24,15 @@ AFartifactGameMode::AFartifactGameMode()
 
 void AFartifactGameMode::BeginPlay()
 {
-	CardManager test_cards;
+	FCardManager test_cards;
 
-	Card tcard1;
-	Card tcard2;
-	Card tcard3;
+	FCard tcard1;
+	FCard tcard2;
+	FCard tcard3;
 
-	tcard1.which = Card::type::AMERICAN_DOLLAR;
-	tcard2.which = Card::type::PESO;
-	tcard3.which = Card::type::EURO;
+	tcard1.which = (int)FCard::type::AMERICAN_DOLLAR;
+	tcard2.which = (int)FCard::type::PESO;
+	tcard3.which = (int)FCard::type::EURO;
 
 	test_cards.Add({ tcard1, tcard2, tcard3 });
 }

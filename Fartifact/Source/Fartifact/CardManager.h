@@ -3,34 +3,43 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UObject/ObjectMacros.h"
 
 #include <vector>
 #include <string>
+#include <stdint.h>
 
-struct Card
+#include "CardManager.generated.h"
+
+USTRUCT()
+struct FCard
 {
+	GENERATED_BODY()
+
 	static std::vector<std::string> short_names;
 
-	enum class type
+	UENUM()
+	enum class type : uint8
 	{
-		UNKNOWN = 0,
-		AMERICAN_DOLLAR,
-		POUND,
-		DONG,
-		RUBLE,
-		EURO,
-		PESO,
-		RUPEE,
-		BUTTONS,
-		CANADIAN_DOLLAR,
-		AUSTRALIAN_DOLLARYDOO,
-		ZIMBABWEAN_DOLLARS,
-		YUAN,
-		COUNT,
-		NONE
+		UNKNOWN = 0 UMETA(),
+		AMERICAN_DOLLAR UMETA(),
+		POUND UMETA(),
+		DONG UMETA(),
+		RUBLE UMETA(),
+		EURO UMETA(),
+		PESO UMETA(),
+		RUPEE UMETA(),
+		BUTTONS UMETA(),
+		CANADIAN_DOLLAR UMETA(),
+		AUSTRALIAN_DOLLARYDOO UMETA(),
+		ZIMBABWEAN_DOLLARS UMETA(),
+		YUAN UMETA(),
+		COUNT UMETA(),
+		NONE UMETA()
 	};
 
-	enum class visibility
+	UENUM()
+	enum class visibility : uint8
 	{
 		OWNER, ///eg hand, face down cards on the board owned by someone
 		ALL, ///visible to everyone, face up card
@@ -39,9 +48,12 @@ struct Card
 
 	std::string GetShortName();
 
-	type which = type::NONE;
-	visibility visible = visibility::NONE;
-	uint64_t owner_id = 0; ///placeholder
+	UPROPERTY(Transient)
+	int which = (int)type::NONE;
+	UPROPERTY(Transient)
+	int visible = (int)visibility::NONE;
+	
+	uint64_t owner_id = 0;
 
 	bool IsOwnedBy(uint64_t puser_id);
 	bool IsVisibleTo(uint64_t puser_id);
@@ -50,22 +62,25 @@ struct Card
 /**
  * Collection of cards, a logical pile of some description
  */
-class FARTIFACT_API CardManager
+USTRUCT()
+struct FARTIFACT_API FCardManager
 {
-public:
-	CardManager();
-	~CardManager();
+	GENERATED_BODY()
 
-	std::vector<Card> cards;
+	FCardManager();
+	~FCardManager();
 
-	void Add(const Card& c);
-	void Add(const std::vector<Card>& pcards);
-	Card Remove(uint32_t index);
-	Card Fetch(uint32_t index);
+	UPROPERTY(Transient)
+	TArray<FCard> cards;
+
+	void Add(const FCard& c);
+	void Add(const TArray<FCard>& pcards);
+	FCard Remove(uint32_t index);
+	FCard Fetch(uint32_t index);
 	void Clear();
 
 	///returns exactly the same deck of cards, except hides the ones that owner_id is not meant to be able to see
-	CardManager HideByVisibility(uint64_t powner_id);
+	FCardManager HideByVisibility(uint64_t powner_id);
 
 	std::string Debug();
 
@@ -75,5 +90,5 @@ public:
 		std::shuffle(std::begin(cards), std::end(cards), engine);
 	}
 
-	static CardManager Merge(const CardManager& c1, const CardManager& c2);
+	static FCardManager Merge(const FCardManager& c1, const FCardManager& c2);
 };

@@ -3,7 +3,7 @@
 #include "CardManager.h"
 #include <assert.h>
 
-std::vector<std::string> Card::short_names
+std::vector<std::string> FCard::short_names
 {
 	"X",
 	"$",
@@ -22,7 +22,7 @@ std::vector<std::string> Card::short_names
 	"ERR"
 };
 
-std::string Card::GetShortName()
+std::string FCard::GetShortName()
 {
 	int itype = (int)which;
 
@@ -32,79 +32,79 @@ std::string Card::GetShortName()
 	return short_names[itype];
 }
 
-bool Card::IsOwnedBy(uint64_t puser_id)
+bool FCard::IsOwnedBy(uint64_t puser_id)
 {
 	return owner_id == puser_id;
 }
 
-bool Card::IsVisibleTo(uint64_t puser_id)
+bool FCard::IsVisibleTo(uint64_t puser_id)
 {
-	if (visible == visibility::ALL)
+	if (visible == (int)visibility::ALL)
 		return true;
 
-	if (visible == visibility::NONE)
+	if (visible == (int)visibility::NONE)
 		return false;
 
-	if (visible == visibility::OWNER)
+	if (visible == (int)visibility::OWNER)
 		return owner_id == puser_id;
 
 	throw std::runtime_error("Unrecognised visibility option");
 }
 
-CardManager::CardManager()
+FCardManager::FCardManager()
 {
 	assert(Card::short_names.size() == (int)Card::type::NONE);
 }
 
-CardManager::~CardManager()
+FCardManager::~FCardManager()
 {
 }
 
-void CardManager::Add(const Card& c)
+void FCardManager::Add(const FCard& c)
 {
-	cards.push_back(c);
+	cards.Add(c);
 }
 
-void CardManager::Add(const std::vector<Card>& pcards)
+void FCardManager::Add(const TArray<FCard>& pcards)
 {
 	for(auto& c : pcards)
-		cards.push_back(c);
+		cards.Add(c);
 }
 
-Card CardManager::Remove(uint32_t index)
+FCard FCardManager::Remove(uint32_t index)
 {
-	if (index < 0 || index >= cards.size())
+	if (index < 0 || index >= (uint32_t)cards.Num())
 		throw std::runtime_error("Index out of bounds in removing card in card manager");
 
-	Card c = cards[index];
+	FCard c = cards[index];
 
-	cards.erase(cards.begin() + index);
+	cards.RemoveAt(index);
 
 	return c;
 }
 
-Card CardManager::Fetch(uint32_t index)
+FCard FCardManager::Fetch(uint32_t index)
 {
-	if (index < 0 || index >= cards.size())
+	if (index < 0 || index >= (uint32_t)cards.Num())
 		throw std::runtime_error("Index out of bounds in fetching card in card manager");
 
 	return cards[index];
 }
 
-void CardManager::Clear()
+void FCardManager::Clear()
 {
-	cards.clear();
+	cards.Empty();
 }
 
-CardManager CardManager::HideByVisibility(uint64_t puser_id)
+FCardManager FCardManager::HideByVisibility(uint64_t puser_id)
 {
-	CardManager ret;
+	FCardManager ret;
 
-	for (Card c : cards)
+	for (FCard c : cards)
 	{
 		if (!c.IsVisibleTo(puser_id))
 		{
-			c.which = Card::type::UNKNOWN;
+			c.which = (int)FCard::type::UNKNOWN;
 		}
 
 		ret.Add(c);
@@ -113,11 +113,11 @@ CardManager CardManager::HideByVisibility(uint64_t puser_id)
 	return ret;
 }
 
-std::string CardManager::Debug()
+std::string FCardManager::Debug()
 {
 	std::string accum;
 
-	for (Card& c : cards)
+	for (FCard& c : cards)
 	{
 		accum += c.GetShortName();
 	}
@@ -125,9 +125,9 @@ std::string CardManager::Debug()
 	return accum;
 }
 
-CardManager CardManager::Merge(const CardManager& c1, const CardManager& c2)
+FCardManager FCardManager::Merge(const FCardManager& c1, const FCardManager& c2)
 {
-	CardManager ret;
+	FCardManager ret;
 
 	ret.Add(c1.cards);
 	ret.Add(c2.cards);
