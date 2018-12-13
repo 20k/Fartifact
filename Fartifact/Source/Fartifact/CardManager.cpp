@@ -22,6 +22,26 @@ std::vector<FString> FCard::short_names
 	"ERR"
 };
 
+///these two vectors are both for debugging so kill them at some point
+std::vector<FString> long_names
+{
+	"ARMOK",
+	"Dollar",
+	"Pound",
+	"Dong",
+	"Ruble",
+	"Euro",
+	"Peso",
+	"Rupee",
+	"Buttons",
+	"CDollar",
+	"ADollary",
+	"ZDollar",
+	"Yuan",
+	"COUNT",
+	"NONE"
+};
+
 FString FCard::GetShortName()
 {
 	int itype = (int)which;
@@ -30,6 +50,16 @@ FString FCard::GetShortName()
 		throw std::runtime_error("Bad type in card get_short_name");
 
 	return short_names[itype];
+}
+
+FString FCard::GetLongName()
+{
+	int itype = (int)which;
+
+	if (itype < 0 || itype >= (int)type::COUNT)
+		throw std::runtime_error("Bad type in card get_short_name");
+
+	return long_names[itype];
 }
 
 bool FCard::IsOwnedBy(uint64_t puser_id)
@@ -119,7 +149,7 @@ FString FCardManager::Debug()
 
 	for (FCard& c : cards)
 	{
-		accum += c.GetShortName();
+		accum += c.GetLongName();
 	}
 
 	return accum;
@@ -133,6 +163,15 @@ FCardManager FCardManager::Merge(const FCardManager& c1, const FCardManager& c2)
 	ret.Add(c2.cards);
 
 	return ret;
+}
+
+void FBoardState::AddPlayerAndDeck(uint64 player_id, const FCardManager& deck)
+{
+	FOwnedCardManager owned;
+	owned.owner = player_id;
+	owned.cards = deck;
+
+	player_decks.Add(owned);
 }
 
 FBoardState::FBoardState()

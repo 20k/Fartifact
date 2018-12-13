@@ -24,7 +24,7 @@ AFartifactGameMode::AFartifactGameMode()
 
 void AFartifactGameMode::BeginPlay()
 {
-	FCardManager test_cards;
+	FCardManager test_deck;
 
 	FCard tcard1;
 	FCard tcard2;
@@ -34,5 +34,8 @@ void AFartifactGameMode::BeginPlay()
 	tcard2.which = (int)FCard::type::PESO;
 	tcard3.which = (int)FCard::type::EURO;
 
-	test_cards.Add({ tcard1, tcard2, tcard3 });
+	test_deck.Add({ tcard1, tcard2, tcard3 });
+
+	test_board_state.AddPlayerAndDeck(0, test_deck);
+	test_board_state.AddPlayerAndDeck(1, test_deck);
 }

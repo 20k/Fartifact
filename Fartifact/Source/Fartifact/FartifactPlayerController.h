@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "CardManager.h"
 #include "FartifactPlayerController.generated.h"
 
 UCLASS()
@@ -18,6 +19,12 @@ public:
 	void CommandToServer(const FString& ACommand);
 
 	void PreSendCommand(FString ACommand);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void FetchGameStateFromServer();
+
+	UFUNCTION(Client, Reliable)
+	void ReceiveGameState(FBoardState board_state);
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */

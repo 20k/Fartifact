@@ -49,6 +49,7 @@ struct FCard
 	};
 
 	FString GetShortName();
+	FString GetLongName();
 
 	UPROPERTY(Transient)
 	int which = (int)type::NONE;
@@ -117,6 +118,8 @@ struct FARTIFACT_API FBoardState
 	TArray<FOwnedCardManager> board_states;
 	UPROPERTY(Transient)
 	TArray<FOwnedCardManager> player_decks;
+
+	void AddPlayerAndDeck(uint64 player_id, const FCardManager& deck);
 
 	FBoardState();
 	~FBoardState();
