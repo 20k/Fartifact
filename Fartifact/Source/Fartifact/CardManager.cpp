@@ -3,7 +3,7 @@
 #include "CardManager.h"
 #include <assert.h>
 
-std::vector<std::string> FCard::short_names
+std::vector<FString> FCard::short_names
 {
 	"X",
 	"$",
@@ -22,7 +22,7 @@ std::vector<std::string> FCard::short_names
 	"ERR"
 };
 
-std::string FCard::GetShortName()
+FString FCard::GetShortName()
 {
 	int itype = (int)which;
 
@@ -113,9 +113,9 @@ FCardManager FCardManager::HideByVisibility(uint64_t puser_id)
 	return ret;
 }
 
-std::string FCardManager::Debug()
+FString FCardManager::Debug()
 {
-	std::string accum;
+	FString accum;
 
 	for (FCard& c : cards)
 	{
@@ -135,12 +135,40 @@ FCardManager FCardManager::Merge(const FCardManager& c1, const FCardManager& c2)
 	return ret;
 }
 
-FGameWorld::FGameWorld()
+FBoardState::FBoardState()
 {
 
 }
 
-FGameWorld::~FGameWorld()
+FBoardState::~FBoardState()
 {
 
+}
+
+FString FBoardState::Debug()
+{
+	FString accum;
+
+	accum = "Hands: ";
+
+	for (FOwnedCardManager& owned : player_hands)
+	{
+		accum += owned.cards.Debug() + "\n";
+	}
+
+	accum += "Board: ";
+
+	for (FOwnedCardManager& board : board_states)
+	{
+		accum += board.cards.Debug() + "\n";
+	}
+
+	accum += "Decks: ";
+
+	for (FOwnedCardManager& deck : player_decks)
+	{
+		accum += deck.cards.Debug();
+	}
+
+	return accum;
 }

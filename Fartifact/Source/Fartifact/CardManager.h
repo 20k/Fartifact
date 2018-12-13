@@ -18,7 +18,7 @@ struct FCard
 {
 	GENERATED_BODY()
 
-	static std::vector<std::string> short_names;
+	static std::vector<FString> short_names;
 
 	UENUM()
 	enum class type : uint8
@@ -48,7 +48,7 @@ struct FCard
 		NONE, ///not visible to anyone, face down neutral
 	};
 
-	std::string GetShortName();
+	FString GetShortName();
 
 	UPROPERTY(Transient)
 	int which = (int)type::NONE;
@@ -84,7 +84,7 @@ struct FARTIFACT_API FCardManager
 	///returns exactly the same deck of cards, except hides the ones that owner_id is not meant to be able to see
 	FCardManager HideByVisibility(uint64_t powner_id);
 
-	std::string Debug();
+	FString Debug();
 
 	template<typename T>
 	void Shuffle(T& engine)
@@ -107,7 +107,7 @@ struct FOwnedCardManager
 };
 
 USTRUCT()
-struct FARTIFACT_API FGameWorld
+struct FARTIFACT_API FBoardState
 {
 	GENERATED_BODY()
 
@@ -118,6 +118,8 @@ struct FARTIFACT_API FGameWorld
 	UPROPERTY(Transient)
 	TArray<FOwnedCardManager> player_decks;
 
-	FGameWorld();
-	~FGameWorld();
+	FBoardState();
+	~FBoardState();
+
+	FString Debug();
 };
