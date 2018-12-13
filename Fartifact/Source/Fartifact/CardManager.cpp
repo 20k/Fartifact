@@ -134,3 +134,13 @@ FCardManager FCardManager::Merge(const FCardManager& c1, const FCardManager& c2)
 
 	return ret;
 }
+
+FGameWorld::FGameWorld()
+{
+
+}
+
+FGameWorld::~FGameWorld()
+{
+
+}

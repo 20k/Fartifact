@@ -9,6 +9,8 @@
 #include <string>
 #include <stdint.h>
 
+#include "Runtime/Core/Public/Containers/Map.h"
+
 #include "CardManager.generated.h"
 
 USTRUCT()
@@ -91,4 +93,31 @@ struct FARTIFACT_API FCardManager
 	}
 
 	static FCardManager Merge(const FCardManager& c1, const FCardManager& c2);
+};
+
+USTRUCT()
+struct FOwnedCardManager
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	uint64 owner = 0;
+	UPROPERTY()
+	FCardManager cards;
+};
+
+USTRUCT()
+struct FARTIFACT_API FGameWorld
+{
+	GENERATED_BODY()
+
+	UPROPERTY(Transient)
+	TArray<FOwnedCardManager> player_hands;
+	UPROPERTY(Transient)
+	TArray<FOwnedCardManager> board_states;
+	UPROPERTY(Transient)
+	TArray<FOwnedCardManager> player_decks;
+
+	FGameWorld();
+	~FGameWorld();
 };
