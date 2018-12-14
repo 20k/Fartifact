@@ -56,6 +56,7 @@ struct FARTIFACT_API FCard
 	UPROPERTY()
 	int visible = (int)visibility::NONE;
 	
+	UPROPERTY()
 	uint64_t owner_id = 0;
 
 	bool IsOwnedBy(uint64_t puser_id);
