@@ -26,4 +26,6 @@ public:
 
 private:
 	UWorld* MyWorld = nullptr;
+
+
 };

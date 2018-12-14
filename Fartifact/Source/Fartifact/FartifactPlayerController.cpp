@@ -37,12 +37,8 @@ void AFartifactPlayerController::BeginPlay()
 			ConsoleWidget = Cast<UConsoleWidget>(CreateWidget<UUserWidget>(this, ConsoleClass));
 			if (ConsoleWidget)
 				ConsoleWidget->AddToViewport();
-
 		}
-
 	}
-
-	
 }
 
 void AFartifactPlayerController::PreSendCommand(FString ACommand)
@@ -187,15 +183,15 @@ void AFartifactPlayerController::ToggleConsole()
 {
 	if (ConsoleWidget != nullptr)
 	{
-		//ConsoleWidget->AddToViewport();
+		
+		if (!ConsoleWidget->IsInViewport())
+		{
+			ConsoleWidget->AddToViewport();
 
-
-		//if (!ConsoleWidget->IsInViewport())
-		//{
-		//}
-		//else
-		//{
-		//	//ConsoleWidget->RemoveFromViewport();
-		//}
+		}
+		else
+		{
+			ConsoleWidget->RemoveFromViewport();
+		}
 	}
 }
