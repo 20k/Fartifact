@@ -176,6 +176,9 @@ struct FARTIFACT_API FBoardState
 	FBoardState HideByVisibility(uint64 player_id);
 
 	TArray<FOwnedCardManager> GetCardsFor(board_states states, uint64 player_id);
+	
+	///unsafe!
+	TArray<FOwnedCardManager*> GetCardsForPtr(board_states states, uint64 player_id);
 
 	FBoardState();
 	~FBoardState();

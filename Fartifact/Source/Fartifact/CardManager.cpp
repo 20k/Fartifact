@@ -210,7 +210,11 @@ void FBoardState::AddPlayerAndDeck(uint64 player_id, const FCardManager& deck)
 		c.visible = (int)FCard::visibility::NONE;
 	}
 
+	FOwnedCardManager dummy_hand;
+	dummy_hand.owner = player_id;
+
 	all_cards[(int)board_states::DECKS].owned.Add(owned);
+	all_cards[(int)board_states::HANDS].owned.Add(dummy_hand);
 
 	UE_LOG(LogTemp, Warning, TEXT("Deck size %i"), all_cards[(int)board_states::DECKS].owned.Num());
 }
@@ -241,6 +245,21 @@ TArray<FOwnedCardManager> FBoardState::GetCardsFor(board_states states, uint64 p
 			continue;
 
 		ret.Add(i);
+	}
+
+	return ret;
+}
+
+TArray<FOwnedCardManager*> FBoardState::GetCardsForPtr(board_states states, uint64 player_id)
+{
+	TArray<FOwnedCardManager*> ret;
+
+	for (auto& i : all_cards[(int)states].owned)
+	{
+		if (i.owner != player_id)
+			continue;
+
+		ret.Add(&i);
 	}
 
 	return ret;
