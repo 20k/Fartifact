@@ -107,11 +107,12 @@ struct FARTIFACT_API FOwnedCardManager
 	FCardManager cards;
 };
 
-#if 0
+struct FBoardState;
+
 USTRUCT()
 struct FARTIFACT_API FCardMove
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 
 	enum class type : uint8
 	{
@@ -124,6 +125,12 @@ struct FARTIFACT_API FCardMove
 	int which = (int)type::PASS;
 
 	UPROPERTY()
+	int section_source_offset = 0;
+
+	UPROPERTY()
+	int section_dest_offset = 0;
+
+	UPROPERTY()
 	int card_offset = 0;
 	
 	UPROPERTY()
@@ -133,11 +140,11 @@ struct FARTIFACT_API FCardMove
 	UPROPERTY()
 	int card_manager_dest_offset = -1;
 
-	void MakePass();
-	/*void MakeMove(int pcard_offset, int pcard_manager_source_offset, int pcard_manager_dest_offset = -1);
-	void MakeMove(FCard* card_pointer, FCardManager& source, FCardManager& dest);*/
+	void MakePass(FBoardState& board_state);
+
+	void MakeDraw(FBoardState& board_state, uint64 owner_id);
+	void MakePlay(FBoardState& board_state, uint64 owner_id, int phand_card_offset);
 };
-#endif
 
 USTRUCT()
 struct FOwnedCardList
@@ -167,6 +174,8 @@ struct FARTIFACT_API FBoardState
 	void AddPlayerAndDeck(uint64 player_id, const FCardManager& deck);
 
 	FBoardState HideByVisibility(uint64 player_id);
+
+	TArray<FOwnedCardManager> GetCardsFor(board_states states, uint64 player_id);
 
 	FBoardState();
 	~FBoardState();

@@ -165,6 +165,38 @@ FCardManager FCardManager::Merge(const FCardManager& c1, const FCardManager& c2)
 	return ret;
 }
 
+void FCardMove::MakePass(FBoardState& board_state)
+{
+	which = (int)type::PASS;
+}
+
+void FCardMove::MakeDraw(FBoardState& board_state, uint64 owner_id)
+{
+	which = (int)type::MOVE;
+
+	section_source_offset = (int)FBoardState::board_states::DECKS;
+	section_dest_offset = (int)FBoardState::board_states::HANDS;
+
+	card_offset = -1;
+	card_manager_source_offset = -1;
+	card_manager_dest_offset = -1;
+}
+
+void FCardMove::MakePlay(FBoardState& board_state, uint64 owner_id, int phand_card_offset)
+{
+	TArray<FOwnedCardManager> own_cards = board_state.GetCardsFor(FBoardState::board_states::BOARD, owner_id);
+
+	which = (int)type::MOVE;
+
+	card_offset = phand_card_offset;
+
+	section_source_offset = (int)FBoardState::board_states::HANDS;
+	section_dest_offset = (int)FBoardState::board_states::BOARD;
+
+	card_manager_source_offset = -1;
+	card_manager_dest_offset = own_cards.Num();
+}
+
 void FBoardState::AddPlayerAndDeck(uint64 player_id, const FCardManager& deck)
 {
 	FOwnedCardManager owned;
@@ -197,6 +229,22 @@ FBoardState FBoardState::HideByVisibility(uint64 player_id)
 
 	return ret;
 }
+
+TArray<FOwnedCardManager> FBoardState::GetCardsFor(board_states states, uint64 player_id)
+{
+	TArray<FOwnedCardManager> ret;
+
+	for (auto& i : all_cards[(int)states].owned)
+	{
+		if (i.owner != player_id)
+			continue;
+
+		ret.Add(i);
+	}
+
+	return ret;
+}
+
 
 FBoardState::FBoardState()
 {
