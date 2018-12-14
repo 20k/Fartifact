@@ -14,30 +14,30 @@
 #include "CardManager.generated.h"
 
 USTRUCT()
-struct FCard
+struct FARTIFACT_API FCard
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 
 	static std::vector<FString> short_names;
 
 	UENUM()
 	enum class type : uint8
 	{
-		UNKNOWN = 0 UMETA(),
-		AMERICAN_DOLLAR UMETA(),
-		POUND UMETA(),
-		DONG UMETA(),
-		RUBLE UMETA(),
-		EURO UMETA(),
-		PESO UMETA(),
-		RUPEE UMETA(),
-		BUTTONS UMETA(),
-		CANADIAN_DOLLAR UMETA(),
-		AUSTRALIAN_DOLLARYDOO UMETA(),
-		ZIMBABWEAN_DOLLARS UMETA(),
-		YUAN UMETA(),
-		COUNT UMETA(),
-		NONE UMETA()
+		UNKNOWN = 0,
+		AMERICAN_DOLLAR,
+		POUND,
+		DONG,
+		RUBLE,
+		EURO,
+		PESO,
+		RUPEE,
+		BUTTONS,
+		CANADIAN_DOLLAR,
+		AUSTRALIAN_DOLLARYDOO,
+		ZIMBABWEAN_DOLLARS,
+		YUAN,
+		COUNT,
+		NONE
 	};
 
 	UENUM()
@@ -51,11 +51,12 @@ struct FCard
 	FString GetShortName();
 	FString GetLongName();
 
-	UPROPERTY(Transient)
+	UPROPERTY()
 	int which = (int)type::NONE;
-	UPROPERTY(Transient)
+	UPROPERTY()
 	int visible = (int)visibility::NONE;
 	
+	UPROPERTY()
 	uint64_t owner_id = 0;
 
 	bool IsOwnedBy(uint64_t puser_id);
@@ -68,12 +69,12 @@ struct FCard
 USTRUCT()
 struct FARTIFACT_API FCardManager
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 
 	FCardManager();
 	~FCardManager();
 
-	UPROPERTY(Transient)
+	UPROPERTY()
 	TArray<FCard> cards;
 
 	void Add(const FCard& c);
@@ -97,9 +98,9 @@ struct FARTIFACT_API FCardManager
 };
 
 USTRUCT()
-struct FOwnedCardManager
+struct FARTIFACT_API FOwnedCardManager
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY()
 	uint64 owner = 0;
@@ -107,22 +108,88 @@ struct FOwnedCardManager
 	FCardManager cards;
 };
 
+struct FBoardState;
+
+USTRUCT()
+struct FARTIFACT_API FCardMove
+{
+	GENERATED_USTRUCT_BODY()
+
+	enum class type : uint8
+	{
+		PASS,
+		MOVE, ///a card from one pile to another, eg from deck to hand or hand to board
+		ATTACK,
+	};
+
+	UPROPERTY()
+	int which = (int)type::PASS;
+
+	UPROPERTY()
+	int section_source_offset = 0;
+
+	UPROPERTY()
+	int section_dest_offset = 0;
+
+	UPROPERTY()
+	int card_offset = 0;
+	
+	UPROPERTY()
+	int card_manager_source_offset = 0;
+
+	///-1 == don't care
+	UPROPERTY()
+	int card_manager_dest_offset = -1;
+
+	void MakePass(FBoardState& board_state);
+
+	void MakeDraw(FBoardState& board_state, uint64 owner_id);
+	void MakePlay(FBoardState& board_state, uint64 owner_id, int phand_card_offset);
+};
+
+USTRUCT()
+struct FOwnedCardList
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	TArray<FOwnedCardManager> owned;
+};
+
 USTRUCT()
 struct FARTIFACT_API FBoardState
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY(Transient)
-	TArray<FOwnedCardManager> player_hands;
-	UPROPERTY(Transient)
-	TArray<FOwnedCardManager> board_states;
-	UPROPERTY(Transient)
-	TArray<FOwnedCardManager> player_decks;
+	enum class board_states
+	{
+		HANDS = 0,
+		BOARD = 1,
+		DECKS = 2,
+		COUNT = 3,
+	};
+
+	UPROPERTY()
+	uint64 turn_offset = 0;
+
+	UPROPERTY()
+	TArray<uint64> players;
+
+	UPROPERTY()
+	TArray<FOwnedCardList> all_cards;
 
 	void AddPlayerAndDeck(uint64 player_id, const FCardManager& deck);
 
+	FBoardState HideByVisibility(uint64 player_id);
+
+	TArray<FOwnedCardManager> GetCardsFor(board_states states, uint64 player_id);
+	
+	///unsafe!
+	TArray<FOwnedCardManager*> GetCardsForPtr(board_states states, uint64 player_id);
+
 	FBoardState();
 	~FBoardState();
+
 
 	FString Debug();
 };

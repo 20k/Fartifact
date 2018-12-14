@@ -14,9 +14,18 @@ class AFartifactPlayerController : public APlayerController
 
 public:
 	AFartifactPlayerController();
+
+	uint64 player_id = 0;
 	
 	UFUNCTION(Server, Reliable, WithValidation)
 	void CommandToServer(const FString& ACommand);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void DrawCard();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void PlayCard(int pcard_offset);
+
 
 	void PreSendCommand(FString ACommand);
 
@@ -24,7 +33,7 @@ public:
 	void FetchGameStateFromServer();
 
 	UFUNCTION(Client, Reliable)
-	void ReceiveGameState(FBoardState board_state);
+	void ReceiveGameState(FBoardState board_state, uint64 my_id);
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */

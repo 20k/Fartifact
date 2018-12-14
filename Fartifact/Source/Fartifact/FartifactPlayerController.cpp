@@ -11,6 +11,7 @@
 #include "Widgets/ConsoleWidget.h"
 #include "Engine/World.h"
 #include "FartifactGameMode.h"
+#include "MoveHandler.h"
 
 AFartifactPlayerController::AFartifactPlayerController()
 {
@@ -66,6 +67,16 @@ void AFartifactPlayerController::PreSendCommand(FString ACommand)
 			FetchGameStateFromServer();
 		}
 
+		if (ACommand == "Draw")
+		{
+			DrawCard();
+		}
+
+		if (ACommand == "Play")
+		{
+			PlayCard(0);
+		}
+
 		FString ExtraString = "Client: ";
 		ExtraString.Append(ACommand);
 
@@ -82,19 +93,26 @@ void AFartifactPlayerController::FetchGameStateFromServer_Implementation()
 {
 	if (GetWorld() == nullptr)
 		return;
-
-	if (GetWorld()->GetAuthGameMode() == nullptr)
-		return;
-
+	
 	auto game_mode = GetWorld()->GetAuthGameMode();
 
-	FBoardState all = ((AFartifactGameMode*)game_mode)->test_board_state;
+	if (game_mode == nullptr)
+		return;
 
-	ReceiveGameState(all);
+	FBoardState all = ((AFartifactGameMode*)game_mode)->board_state;
+
+	//UE_LOG(LogTemp, Warning, TEXT("%i"), all.all_cards.Num());
+
+	//UE_LOG(LogTemp, Warning, TEXT("Server: %i"), all.all_cards[(int)FBoardState::board_states::DECKS].owned.Num());
+
+	ReceiveGameState(all.HideByVisibility(player_id), player_id);
 }
 
-void AFartifactPlayerController::ReceiveGameState_Implementation(FBoardState board_state)
+void AFartifactPlayerController::ReceiveGameState_Implementation(FBoardState board_state, uint64 my_id)
 {
+	UE_LOG(LogTemp, Warning, TEXT("%i"), board_state.all_cards.Num());
+	UE_LOG(LogTemp, Warning, TEXT("%i"), board_state.all_cards[(int)FBoardState::board_states::DECKS].owned.Num());
+
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *(board_state.Debug()));
 }
 
@@ -110,6 +128,68 @@ void AFartifactPlayerController::CommandToServer_Implementation(const FString& A
 bool AFartifactPlayerController::CommandToServer_Validate(const FString& ACommand)
 {
 	return true;
+}
+
+bool AFartifactPlayerController::DrawCard_Validate()
+{
+	return true;
+}
+
+void AFartifactPlayerController::DrawCard_Implementation()
+{
+	if (GetWorld() == nullptr)
+		return;
+
+	auto game_mode = GetWorld()->GetAuthGameMode();
+
+	if (game_mode == nullptr)
+		return;
+
+	FBoardState& all = ((AFartifactGameMode*)game_mode)->board_state;
+
+	UE_LOG(LogTemp, Warning, TEXT("PLAYER WITH ID %i"), (int32)player_id);
+
+	FCardMove mv;
+	///0 is a stand in for whatever my id  is
+	mv.MakeDraw(all, player_id);
+
+	FMoveResult res = MoveHandler::Play(all, mv, player_id);
+
+	UE_LOG(LogTemp, Warning, TEXT("Server success %i %s\n"), res.success, *res.reason);
+
+	if (!res.success)
+		return;
+	else
+		all = res.result;
+}
+
+bool AFartifactPlayerController::PlayCard_Validate(int pcard_offset)
+{
+	return true;
+}
+
+void AFartifactPlayerController::PlayCard_Implementation(int pcard_offset)
+{
+	if (GetWorld() == nullptr)
+		return;
+
+	auto game_mode = GetWorld()->GetAuthGameMode();
+
+	if (game_mode == nullptr)
+		return;
+
+	FBoardState& all = ((AFartifactGameMode*)game_mode)->board_state;
+
+	FCardMove mv;
+	///0 is a stand in for whatever my id  is
+	mv.MakePlay(all, player_id, pcard_offset);
+
+	FMoveResult res = MoveHandler::Play(all, mv, player_id);
+
+	if (!res.success)
+		return;
+	else
+		all = res.result;
 }
 
 void AFartifactPlayerController::PlayerTick(float DeltaTime)
