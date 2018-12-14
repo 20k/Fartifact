@@ -38,4 +38,7 @@ void AFartifactGameMode::BeginPlay()
 
 	test_board_state.AddPlayerAndDeck(0, test_deck);
 	test_board_state.AddPlayerAndDeck(1, test_deck);
+
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *test_board_state.Debug());
+	UE_LOG(LogTemp, Warning, TEXT("Asize %i"), test_board_state.all_cards.Num());
 }

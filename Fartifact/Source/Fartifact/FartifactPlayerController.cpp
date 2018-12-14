@@ -92,13 +92,23 @@ void AFartifactPlayerController::FetchGameStateFromServer_Implementation()
 
 	auto game_mode = GetWorld()->GetAuthGameMode();
 
+	if (game_mode == nullptr)
+		return;
+
 	FBoardState all = ((AFartifactGameMode*)game_mode)->test_board_state;
 
-	ReceiveGameState(all);
+	UE_LOG(LogTemp, Warning, TEXT("%i"), all.all_cards.Num());
+
+	UE_LOG(LogTemp, Warning, TEXT("Server: %i"), all.all_cards[(int)FBoardState::board_states::DECKS].owned.Num());
+
+	ReceiveGameState(all.HideByVisibility(0));
 }
 
 void AFartifactPlayerController::ReceiveGameState_Implementation(FBoardState board_state)
 {
+	UE_LOG(LogTemp, Warning, TEXT("%i"), board_state.all_cards.Num());
+	UE_LOG(LogTemp, Warning, TEXT("%i"), board_state.all_cards[(int)FBoardState::board_states::DECKS].owned.Num());
+
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *(board_state.Debug()));
 }
 

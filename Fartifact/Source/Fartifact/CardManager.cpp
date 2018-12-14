@@ -97,7 +97,7 @@ void FCardManager::Add(const FCard& c)
 
 void FCardManager::Add(const TArray<FCard>& pcards)
 {
-	for(auto& c : pcards)
+	for(const FCard& c : pcards)
 		cards.Add(c);
 }
 
@@ -171,12 +171,36 @@ void FBoardState::AddPlayerAndDeck(uint64 player_id, const FCardManager& deck)
 	owned.owner = player_id;
 	owned.cards = deck;
 
-	player_decks.Add(owned);
+	for (FCard& c : owned.cards.cards)
+	{
+		c.owner_id = player_id;
+		c.visible = (int)FCard::visibility::NONE;
+	}
+
+	all_cards[(int)board_states::DECKS].owned.Add(owned);
+
+	UE_LOG(LogTemp, Warning, TEXT("Deck size %i"), all_cards[(int)board_states::DECKS].owned.Num());
+}
+
+FBoardState FBoardState::HideByVisibility(uint64 player_id)
+{
+	FBoardState ret = *this;
+
+	for (FOwnedCardManager& check : ret.all_cards[(int)board_states::HANDS].owned)
+		check.cards = check.cards.HideByVisibility(player_id);
+
+	for (FOwnedCardManager& check : ret.all_cards[(int)board_states::BOARD].owned)
+		check.cards = check.cards.HideByVisibility(player_id);
+
+	for (FOwnedCardManager& check : ret.all_cards[(int)board_states::DECKS].owned)
+		check.cards = check.cards.HideByVisibility(player_id);
+
+	return ret;
 }
 
 FBoardState::FBoardState()
 {
-
+	all_cards.SetNum((int)board_states::COUNT);
 }
 
 FBoardState::~FBoardState()
@@ -190,21 +214,21 @@ FString FBoardState::Debug()
 
 	accum = "Hands: ";
 
-	for (FOwnedCardManager& owned : player_hands)
+	for (FOwnedCardManager& owned : all_cards[(int)board_states::HANDS].owned)
 	{
 		accum += owned.cards.Debug() + "\n";
 	}
 
 	accum += "Board: ";
 
-	for (FOwnedCardManager& board : board_states)
+	for (FOwnedCardManager& board : all_cards[(int)board_states::BOARD].owned)
 	{
 		accum += board.cards.Debug() + "\n";
 	}
 
 	accum += "Decks: ";
 
-	for (FOwnedCardManager& deck : player_decks)
+	for (FOwnedCardManager& deck : all_cards[(int)board_states::DECKS].owned)
 	{
 		accum += deck.cards.Debug();
 	}
