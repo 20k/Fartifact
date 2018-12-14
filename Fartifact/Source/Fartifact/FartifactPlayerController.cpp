@@ -103,13 +103,13 @@ void AFartifactPlayerController::FetchGameStateFromServer_Implementation()
 	if (game_mode == nullptr)
 		return;
 
-	FBoardState all = ((AFartifactGameMode*)game_mode)->test_board_state;
+	FBoardState all = ((AFartifactGameMode*)game_mode)->board_state;
 
-	UE_LOG(LogTemp, Warning, TEXT("%i"), all.all_cards.Num());
+	//UE_LOG(LogTemp, Warning, TEXT("%i"), all.all_cards.Num());
 
-	UE_LOG(LogTemp, Warning, TEXT("Server: %i"), all.all_cards[(int)FBoardState::board_states::DECKS].owned.Num());
+	//UE_LOG(LogTemp, Warning, TEXT("Server: %i"), all.all_cards[(int)FBoardState::board_states::DECKS].owned.Num());
 
-	ReceiveGameState(all.HideByVisibility(0));
+	ReceiveGameState(all.HideByVisibility(player_id));
 }
 
 void AFartifactPlayerController::ReceiveGameState_Implementation(FBoardState board_state)
@@ -149,9 +149,9 @@ void AFartifactPlayerController::DrawCard_Implementation()
 	if (game_mode == nullptr)
 		return;
 
-	FBoardState& all = ((AFartifactGameMode*)game_mode)->test_board_state;
+	FBoardState& all = ((AFartifactGameMode*)game_mode)->board_state;
 
-	uint64 player_id = 0;
+	UE_LOG(LogTemp, Warning, TEXT("PLAYER WITH ID %i"), (int32)player_id);
 
 	FCardMove mv;
 	///0 is a stand in for whatever my id  is
@@ -182,9 +182,7 @@ void AFartifactPlayerController::PlayCard_Implementation(int pcard_offset)
 	if (game_mode == nullptr)
 		return;
 
-	FBoardState& all = ((AFartifactGameMode*)game_mode)->test_board_state;
-
-	uint64 player_id = 0;
+	FBoardState& all = ((AFartifactGameMode*)game_mode)->board_state;
 
 	FCardMove mv;
 	///0 is a stand in for whatever my id  is

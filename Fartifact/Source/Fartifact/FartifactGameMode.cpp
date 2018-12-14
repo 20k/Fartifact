@@ -26,6 +26,11 @@ AFartifactGameMode::AFartifactGameMode()
 
 void AFartifactGameMode::BeginPlay()
 {
+	
+}
+
+void AFartifactGameMode::StartGame()
+{
 	FCardManager test_deck;
 
 	FCard tcard1;
@@ -38,16 +43,32 @@ void AFartifactGameMode::BeginPlay()
 
 	test_deck.Add({ tcard1, tcard2, tcard3 });
 
-	test_board_state.AddPlayerAndDeck(0, test_deck);
-	test_board_state.AddPlayerAndDeck(1, test_deck);
+	//board_state.AddPlayerAndDeck(0, test_deck);
+	//board_state.AddPlayerAndDeck(1, test_deck);
 
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *test_board_state.Debug());
-	UE_LOG(LogTemp, Warning, TEXT("Asize %i"), test_board_state.all_cards.Num());
+	for (auto id : player_ids)
+	{
+		board_state.AddPlayerAndDeck(id, test_deck);
+	}
+
+	//UE_LOG(LogTemp, Warning, TEXT("%s"), *board_state.Debug());
+	//UE_LOG(LogTemp, Warning, TEXT("Asize %i"), board_state.all_cards.Num());
 }
 
 void AFartifactGameMode::PostLogin(APlayerController* player)
 {
 	Super::PostLogin(player);
 
-	((AFartifactPlayerController*)player)->player_id = player->PlayerState->PlayerId;
+	uint64 player_id = player->PlayerState->PlayerId;
+
+	((AFartifactPlayerController*)player)->player_id = player_id;
+
+	player_ids.Add(player_id);
+
+	UE_LOG(LogTemp, Warning, TEXT("Gained player with id %i"), (int32)player_id);
+
+	if (player_ids.Num() == 2)
+	{
+		StartGame();
+	}
 }
