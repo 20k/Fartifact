@@ -6,12 +6,16 @@
 
 #include "CardManager.h"
 
-struct BadMovet {};
+struct BadMove
+{
+	FString reason;
+};
 
 struct FMoveResult
 {
 	FBoardState result;
 	bool success = false;
+	FString reason;
 
 	FMoveResult(FBoardState res)
 	{
@@ -19,9 +23,10 @@ struct FMoveResult
 		success = true;
 	}
 
-	FMoveResult(const BadMovet&)
+	FMoveResult(const BadMove& t)
 	{
 		success = false;
+		reason = t.reason;
 	}
 };
 

@@ -10,8 +10,6 @@ MoveHandler::~MoveHandler()
 {
 }
 
-BadMovet BadMove;
-
 FMoveResult MoveHandler::Play(FBoardState in, const FCardMove& to_play, uint64 player_id)
 {
 	if (to_play.which == (int)FCardMove::type::PASS)
@@ -19,7 +17,7 @@ FMoveResult MoveHandler::Play(FBoardState in, const FCardMove& to_play, uint64 p
 
 	///attacks unimplemented
 	if (to_play.which == (int)FCardMove::type::ATTACK)
-		return BadMove;
+		return BadMove{ "Unimplemented" };
 
 	TArray<FOwnedCardManager*> my_hand = in.GetCardsForPtr(FBoardState::board_states::HANDS, player_id);
 	TArray<FOwnedCardManager*> my_deck = in.GetCardsForPtr(FBoardState::board_states::DECKS, player_id);
@@ -31,22 +29,22 @@ FMoveResult MoveHandler::Play(FBoardState in, const FCardMove& to_play, uint64 p
 		int dest_pile = to_play.section_dest_offset;
 
 		if (source_pile < 0 || source_pile >= (int)FBoardState::board_states::COUNT)
-			return BadMove;
+			return BadMove{ "Bad Source Pile" };
 
 		if (dest_pile < 0 || dest_pile >= (int)FBoardState::board_states::COUNT)
-			return BadMove;
+			return BadMove{ "Bad Dest Pile" };
 
 		///can't have a destination pile be a deck
 		if (dest_pile == (int)FBoardState::board_states::DECKS)
-			return BadMove;
+			return BadMove{ "Dest Pile is Deck" };
 
 		///if we're drawing it cannot be from the board
 		if (source_pile == (int)FBoardState::board_states::BOARD)
-			return BadMove;
+			return BadMove{ "Source Pile is Board" };
 
 		///if we're drawing from the deck, it must be to a hand
 		if (source_pile == (int)FBoardState::board_states::DECKS && dest_pile != (int)FBoardState::board_states::HANDS)
-			return BadMove;
+			return BadMove{ "Source Pile is Deck and Dest is not Hand" };
 
 		TArray<FOwnedCardManager>& source = in.all_cards[source_pile].owned;
 		TArray<FOwnedCardManager>& dest = in.all_cards[dest_pile].owned;
@@ -58,7 +56,7 @@ FMoveResult MoveHandler::Play(FBoardState in, const FCardMove& to_play, uint64 p
 			source_cmanager = 0;
 
 		if (my_hand.Num() == 0 || my_deck.Num() == 0)
-			return BadMove;
+			return BadMove{ "My hand == 0 or my deck == 0" };
 
 		///always plays to the right at the moment
 		if (dest_pile == (int)FBoardState::board_states::BOARD)
@@ -75,15 +73,14 @@ FMoveResult MoveHandler::Play(FBoardState in, const FCardMove& to_play, uint64 p
 
 		if(dest_pile == (int)FBoardState::board_states::HANDS)
 		{
-			if (dest_cmanager != 0)
-				return BadMove;
+			dest_cmanager = 0;
 		}
 
 		if (source_cmanager < 0 || source_cmanager >= in.GetCardsFor((FBoardState::board_states)source_pile, player_id).Num())
-			return BadMove;
+			return BadMove{ "Source cmanager OOB" };
 
 		if (dest_cmanager < 0 || dest_cmanager >= in.GetCardsFor((FBoardState::board_states)dest_pile, player_id).Num())
-			return BadMove;
+			return BadMove{ "Dest cmanager OOB" };
 
 		FOwnedCardManager* source_card_manager = in.GetCardsForPtr((FBoardState::board_states)source_pile, player_id)[source_cmanager];
 		FOwnedCardManager* dest_card_manager = in.GetCardsForPtr((FBoardState::board_states)dest_pile, player_id)[dest_cmanager];
@@ -94,14 +91,14 @@ FMoveResult MoveHandler::Play(FBoardState in, const FCardMove& to_play, uint64 p
 		if (source_pile == (int)FBoardState::board_states::DECKS)
 		{
 			if(source_card_offset != -1)
-				return BadMove;
+				return BadMove{ "Source Card Offset != -1" };
 		}
 
 		if (source_card_offset < 0)
 			source_card_offset = source_card_manager->cards.cards.Num() - 1;
 
 		if (source_card_offset < 0 || source_card_offset >= source_card_manager->cards.cards.Num())
-			return BadMove;
+			return BadMove{ "Source Card Offset OOB" };
 
 		FCard actual_card = source_card_manager->cards.cards[source_card_offset];
 
@@ -127,5 +124,5 @@ FMoveResult MoveHandler::Play(FBoardState in, const FCardMove& to_play, uint64 p
 		return in;
 	}
 
-	return BadMove;
+	return BadMove{ "Bad Type" };
 }

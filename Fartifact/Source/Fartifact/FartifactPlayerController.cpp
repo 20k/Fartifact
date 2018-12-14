@@ -71,6 +71,16 @@ void AFartifactPlayerController::PreSendCommand(FString ACommand)
 			FetchGameStateFromServer();
 		}
 
+		if (ACommand == "Draw")
+		{
+			DrawCard();
+		}
+
+		if (ACommand == "Play")
+		{
+			PlayCard(0);
+		}
+
 		FString ExtraString = "Client: ";
 		ExtraString.Append(ACommand);
 
@@ -148,6 +158,8 @@ void AFartifactPlayerController::DrawCard_Implementation()
 	mv.MakeDraw(all, player_id);
 
 	FMoveResult res = MoveHandler::Play(all, mv, player_id);
+
+	UE_LOG(LogTemp, Warning, TEXT("Server success %i %s\n"), res.success, *res.reason);
 
 	if (!res.success)
 		return;
