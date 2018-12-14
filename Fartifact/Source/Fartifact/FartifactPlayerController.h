@@ -14,6 +14,8 @@ class AFartifactPlayerController : public APlayerController
 
 public:
 	AFartifactPlayerController();
+
+	uint64 player_id = 0;
 	
 	UFUNCTION(Server, Reliable, WithValidation)
 	void CommandToServer(const FString& ACommand);

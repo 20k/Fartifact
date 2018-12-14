@@ -6,6 +6,8 @@
 #include "UObject/ConstructorHelpers.h"
 #include "FartifactGameStateBase.h"
 #include "CardManager.h"
+#include "FartifactPlayerController.h"
+#include "Runtime/Engine/Classes/GameFramework/PlayerState.h"
 
 AFartifactGameMode::AFartifactGameMode()
 {
@@ -41,4 +43,11 @@ void AFartifactGameMode::BeginPlay()
 
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *test_board_state.Debug());
 	UE_LOG(LogTemp, Warning, TEXT("Asize %i"), test_board_state.all_cards.Num());
+}
+
+void AFartifactGameMode::PostLogin(APlayerController* player)
+{
+	Super::PostLogin(player);
+
+	((AFartifactPlayerController*)player)->player_id = player->PlayerState->PlayerId;
 }

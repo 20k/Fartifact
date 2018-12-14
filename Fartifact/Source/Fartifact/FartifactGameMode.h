@@ -18,7 +18,6 @@ public:
 	void BeginPlay() override;
 
 	FBoardState test_board_state;
+
+	void PostLogin(APlayerController* player);
 };
-
-
-
