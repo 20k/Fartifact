@@ -10,6 +10,7 @@
 #include "FartifactGameStateBase.h"
 #include "Widgets/ConsoleWidget.h"
 #include "Engine/World.h"
+#include "FartifactGameMode.h"
 
 AFartifactPlayerController::AFartifactPlayerController()
 {
@@ -55,15 +56,46 @@ void AFartifactPlayerController::PreSendCommand(FString ACommand)
 
 
 		MyGameState->CommandToMulti(ExtraString);
-		
 	}
 	else
 	{
+		UE_LOG(LogTemp, Warning, TEXT("%s"), *ACommand);
+
+		if (ACommand == "Fetch")
+		{
+			FetchGameStateFromServer();
+		}
+
 		FString ExtraString = "Client: ";
 		ExtraString.Append(ACommand);
 
 		CommandToServer(ExtraString);
 	}
+}
+
+bool AFartifactPlayerController::FetchGameStateFromServer_Validate()
+{
+	return true;
+}
+
+void AFartifactPlayerController::FetchGameStateFromServer_Implementation()
+{
+	if (GetWorld() == nullptr)
+		return;
+
+	if (GetWorld()->GetAuthGameMode() == nullptr)
+		return;
+
+	auto game_mode = GetWorld()->GetAuthGameMode();
+
+	FBoardState all = ((AFartifactGameMode*)game_mode)->test_board_state;
+
+	ReceiveGameState(all);
+}
+
+void AFartifactPlayerController::ReceiveGameState_Implementation(FBoardState board_state)
+{
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *(board_state.Debug()));
 }
 
 void AFartifactPlayerController::CommandToServer_Implementation(const FString& ACommand)

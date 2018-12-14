@@ -7,6 +7,7 @@
 
 #include "UObject/ConstructorHelpers.h"
 #include "FartifactGameStateBase.h"
+#include "CardManager.h"
 
 AFartifactGameMode::AFartifactGameMode()
 {
@@ -16,11 +17,28 @@ AFartifactGameMode::AFartifactGameMode()
 	PlayerControllerClass = AFartifactPlayerController::StaticClass();
 	DefaultPawnClass = ACameraPawn::StaticClass();
 
-
 	// set default pawn class to our Blueprinted character
 	/*static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/TopDownCPP/Blueprints/TopDownCharacter"));
 	if (PlayerPawnBPClass.Class != NULL)
 	{
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}*/
+}
+
+void AFartifactGameMode::BeginPlay()
+{
+	FCardManager test_deck;
+
+	FCard tcard1;
+	FCard tcard2;
+	FCard tcard3;
+
+	tcard1.which = (int)FCard::type::AMERICAN_DOLLAR;
+	tcard2.which = (int)FCard::type::PESO;
+	tcard3.which = (int)FCard::type::EURO;
+
+	test_deck.Add({ tcard1, tcard2, tcard3 });
+
+	test_board_state.AddPlayerAndDeck(0, test_deck);
+	test_board_state.AddPlayerAndDeck(1, test_deck);
 }

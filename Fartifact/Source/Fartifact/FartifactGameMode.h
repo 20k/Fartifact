@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "CardManager.h"
 #include "FartifactGameMode.generated.h"
 
 UCLASS(minimalapi)
@@ -13,6 +14,10 @@ class AFartifactGameMode : public AGameModeBase
 
 public:
 	AFartifactGameMode();
+
+	void BeginPlay() override;
+
+	FBoardState test_board_state;
 };
 
 
