@@ -169,6 +169,12 @@ struct FARTIFACT_API FBoardState
 	};
 
 	UPROPERTY()
+	uint64 turn_offset = 0;
+
+	UPROPERTY()
+	TArray<uint64> players;
+
+	UPROPERTY()
 	TArray<FOwnedCardList> all_cards;
 
 	void AddPlayerAndDeck(uint64 player_id, const FCardManager& deck);
@@ -182,6 +188,7 @@ struct FARTIFACT_API FBoardState
 
 	FBoardState();
 	~FBoardState();
+
 
 	FString Debug();
 };

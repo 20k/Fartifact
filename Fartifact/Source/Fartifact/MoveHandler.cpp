@@ -10,8 +10,17 @@ MoveHandler::~MoveHandler()
 {
 }
 
-FMoveResult MoveHandler::Play(FBoardState in, const FCardMove& to_play, uint64 player_id)
+FMoveResult MoveHandler::Play(FBoardState prev, const FCardMove& to_play, uint64 player_id)
 {
+	if (prev.players.Num() == 0)
+		return BadMove{ "No players in game" };
+
+	FBoardState in = prev;
+	in.turn_offset = (in.turn_offset + 1) % in.players.Num();
+
+	if (prev.players[prev.turn_offset % prev.players.Num()] != player_id)
+		return BadMove{ "It is not your turn" };
+
 	if (to_play.which == (int)FCardMove::type::PASS)
 		return in;
 

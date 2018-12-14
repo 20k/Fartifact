@@ -200,6 +200,8 @@ void FCardMove::MakePlay(FBoardState& board_state, uint64 owner_id, int phand_ca
 
 void FBoardState::AddPlayerAndDeck(uint64 player_id, const FCardManager& deck)
 {
+	players.Add(player_id);
+
 	FOwnedCardManager owned;
 	owned.owner = player_id;
 	owned.cards = deck;
@@ -300,6 +302,8 @@ FString FBoardState::Debug()
 	{
 		accum += deck.cards.Debug();
 	}
+
+	accum += "Turn: " + FString::FromInt(turn_offset) + "\n";
 
 	return accum;
 }
