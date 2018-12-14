@@ -109,10 +109,10 @@ void AFartifactPlayerController::FetchGameStateFromServer_Implementation()
 
 	//UE_LOG(LogTemp, Warning, TEXT("Server: %i"), all.all_cards[(int)FBoardState::board_states::DECKS].owned.Num());
 
-	ReceiveGameState(all.HideByVisibility(player_id));
+	ReceiveGameState(all.HideByVisibility(player_id), player_id);
 }
 
-void AFartifactPlayerController::ReceiveGameState_Implementation(FBoardState board_state)
+void AFartifactPlayerController::ReceiveGameState_Implementation(FBoardState board_state, uint64 my_id)
 {
 	UE_LOG(LogTemp, Warning, TEXT("%i"), board_state.all_cards.Num());
 	UE_LOG(LogTemp, Warning, TEXT("%i"), board_state.all_cards[(int)FBoardState::board_states::DECKS].owned.Num());

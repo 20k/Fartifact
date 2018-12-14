@@ -33,7 +33,7 @@ public:
 	void FetchGameStateFromServer();
 
 	UFUNCTION(Client, Reliable)
-	void ReceiveGameState(FBoardState board_state);
+	void ReceiveGameState(FBoardState board_state, uint64 my_id);
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
