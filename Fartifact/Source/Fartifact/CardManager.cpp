@@ -174,10 +174,11 @@ void FCardMove::MakeDraw(FBoardState& board_state, uint64 owner_id)
 {
 	which = (int)type::MOVE;
 
+	card_offset = -1;
+
 	section_source_offset = (int)FBoardState::board_states::DECKS;
 	section_dest_offset = (int)FBoardState::board_states::HANDS;
 
-	card_offset = -1;
 	card_manager_source_offset = -1;
 	card_manager_dest_offset = -1;
 }
