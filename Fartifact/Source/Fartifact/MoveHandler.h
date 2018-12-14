@@ -6,7 +6,7 @@
 
 #include "CardManager.h"
 
-struct BadMovet {} BadMove;
+struct BadMovet {};
 
 struct FMoveResult
 {

@@ -18,6 +18,13 @@ public:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void CommandToServer(const FString& ACommand);
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void DrawCard();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void PlayCard(int pcard_offset);
+
+
 	void PreSendCommand(FString ACommand);
 
 	UFUNCTION(Server, Reliable, WithValidation)

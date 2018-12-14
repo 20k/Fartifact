@@ -11,6 +11,7 @@
 #include "Widgets/ConsoleWidget.h"
 #include "Engine/World.h"
 #include "FartifactGameMode.h"
+#include "MoveHandler.h"
 
 AFartifactPlayerController::AFartifactPlayerController()
 {
@@ -86,10 +87,7 @@ void AFartifactPlayerController::FetchGameStateFromServer_Implementation()
 {
 	if (GetWorld() == nullptr)
 		return;
-
-	if (GetWorld()->GetAuthGameMode() == nullptr)
-		return;
-
+	
 	auto game_mode = GetWorld()->GetAuthGameMode();
 
 	if (game_mode == nullptr)
@@ -124,6 +122,68 @@ void AFartifactPlayerController::CommandToServer_Implementation(const FString& A
 bool AFartifactPlayerController::CommandToServer_Validate(const FString& ACommand)
 {
 	return true;
+}
+
+bool AFartifactPlayerController::DrawCard_Validate()
+{
+	return true;
+}
+
+void AFartifactPlayerController::DrawCard_Implementation()
+{
+	if (GetWorld() == nullptr)
+		return;
+
+	auto game_mode = GetWorld()->GetAuthGameMode();
+
+	if (game_mode == nullptr)
+		return;
+
+	FBoardState& all = ((AFartifactGameMode*)game_mode)->test_board_state;
+
+	uint64 player_id = 0;
+
+	FCardMove mv;
+	///0 is a stand in for whatever my id  is
+	mv.MakeDraw(all, player_id);
+
+	FMoveResult res = MoveHandler::Play(all, mv, player_id);
+
+	if (!res.success)
+		return;
+	else
+		all = res.result;
+}
+
+bool AFartifactPlayerController::PlayCard_Validate(int pcard_offset)
+{
+	return true;
+}
+
+void AFartifactPlayerController::PlayCard_Implementation(int pcard_offset)
+{
+	if (GetWorld() == nullptr)
+		return;
+
+	auto game_mode = GetWorld()->GetAuthGameMode();
+
+	if (game_mode == nullptr)
+		return;
+
+	FBoardState& all = ((AFartifactGameMode*)game_mode)->test_board_state;
+
+	uint64 player_id = 0;
+
+	FCardMove mv;
+	///0 is a stand in for whatever my id  is
+	mv.MakePlay(all, player_id, pcard_offset);
+
+	FMoveResult res = MoveHandler::Play(all, mv, player_id);
+
+	if (!res.success)
+		return;
+	else
+		all = res.result;
 }
 
 void AFartifactPlayerController::PlayerTick(float DeltaTime)

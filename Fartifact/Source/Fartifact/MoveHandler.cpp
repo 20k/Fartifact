@@ -10,6 +10,8 @@ MoveHandler::~MoveHandler()
 {
 }
 
+BadMovet BadMove;
+
 FMoveResult MoveHandler::Play(FBoardState in, const FCardMove& to_play, uint64 player_id)
 {
 	if (to_play.which == (int)FCardMove::type::PASS)
