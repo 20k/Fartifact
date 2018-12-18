@@ -47,14 +47,7 @@ public:
 	class UWidgetComponent* PreviewWidget = nullptr;
 
 	UPROPERTY(EditAnywhere)
-		class UTimelineComponent* MyTimeline;
-
-	UPROPERTY(EditAnywhere)
-		class UCurveFloat* FloatCurve;
-
-	UPROPERTY(EditAnywhere)
-		TEnumAsByte<ETimelineDirection::Type> TimelineDirection;
-
+	class UTimelineComponent* MyTimeline;
 
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* HitBox = nullptr;

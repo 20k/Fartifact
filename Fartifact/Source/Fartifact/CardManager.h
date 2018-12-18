@@ -60,6 +60,17 @@ struct FCard
 
 	bool IsOwnedBy(uint64_t puser_id);
 	bool IsVisibleTo(uint64_t puser_id);
+
+	//check to see if the card matches the other card by overloading the "==" operator.
+	FORCEINLINE bool operator==(const FCard &Other) const
+	{
+		bool Result = true;
+		if (which != Other.which || visible != Other.visible || owner_id != Other.owner_id)
+		{
+			Result = false;
+		}
+		return Result;
+	}
 };
 
 /**
@@ -94,6 +105,8 @@ struct FARTIFACT_API FCardManager
 	}
 
 	static FCardManager Merge(const FCardManager& c1, const FCardManager& c2);
+
+
 };
 
 USTRUCT()

@@ -7,6 +7,15 @@
 #include "CardManager.h"
 #include "FartifactPlayerController.generated.h"
 
+USTRUCT()
+struct FCardArray
+{
+	GENERATED_BODY()
+
+		UPROPERTY()
+		TArray<class ACardActor*> Pile;
+};
+
 UCLASS()
 class AFartifactPlayerController : public APlayerController
 {
@@ -18,6 +27,7 @@ public:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void CommandToServer(const FString& ACommand);
 
+
 	void PreSendCommand(FString ACommand);
 
 	UFUNCTION(Server, Reliable, WithValidation)
@@ -25,6 +35,9 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void ReceiveGameState(FBoardState board_state);
+
+	void MakeBoardChanges(FBoardState BoardState);
+
 
 protected:
 	/** True if the controlled character should navigate to the mouse cursor. */
@@ -37,23 +50,6 @@ protected:
 	virtual void SetupInputComponent() override;
 	// End PlayerController interface
 
-	/** Resets HMD orientation in VR. */
-	void OnResetVR();
-
-	/** Navigate player to the current mouse cursor location. */
-	void MoveToMouseCursor();
-
-
-
-	/** Navigate player to the current touch location. */
-	void MoveToTouchLocation(const ETouchIndex::Type FingerIndex, const FVector Location);
-	
-	/** Navigate player to the given world location. */
-	void SetNewMoveDestination(const FVector DestLocation);
-
-	/** Input handlers for SetDestination action. */
-	void OnSetDestinationPressed();
-	void OnSetDestinationReleased();
 
 	void ToggleConsole();
 
@@ -61,9 +57,22 @@ protected:
 	TSubclassOf<class UUserWidget> ConsoleClass = nullptr;
 	class AFartifactGameStateBase* MyGameState = nullptr;
 	class UWorld* MyWorld = nullptr;
+	class UFartifactGameInstance* MyGameInstance = nullptr;
+	int64 player_id;
+	int HandSize = 8;
+	int BoardSize = 8;
 
 public:
 	class UConsoleWidget* ConsoleWidget = nullptr;
+
+	FBoardState CurrentBoardState;
+	//array of actors for each hand
+	TArray<class ACardActor*> CurrentHandYoursCards;
+	TArray<class ACardActor*> CurrentHandTheirsCards;
+
+	//array of arrays for each pile on the board
+	TArray<FCardArray*> CurrentBoardYoursCards;
+	TArray<FCardArray*> CurrentBoardTheirsCards;
 
 };
 

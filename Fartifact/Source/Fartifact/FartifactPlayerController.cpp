@@ -6,6 +6,9 @@
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "FartifactCharacter.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Actors/CardActor.h"
+#include "FartifactGameInstance.h"
+#include "CardManager.h"
 
 #include "FartifactGameStateBase.h"
 #include "Widgets/ConsoleWidget.h"
@@ -19,6 +22,13 @@ AFartifactPlayerController::AFartifactPlayerController()
 
 	ConstructorHelpers::FClassFinder<UUserWidget> ConsoleWidgetBPClass(TEXT("/Game/WidgetBlueprints/ConsoleWidget"));
 	ConsoleClass = ConsoleWidgetBPClass.Class;
+
+	CurrentHandYoursCards.SetNum(8);
+	CurrentHandTheirsCards.SetNum(8);
+	CurrentBoardYoursCards.SetNum(8);
+	CurrentBoardTheirsCards.SetNum(8);
+
+	
 }
 
 void AFartifactPlayerController::BeginPlay()
@@ -29,6 +39,8 @@ void AFartifactPlayerController::BeginPlay()
 		return;
 
 	MyGameState = Cast<AFartifactGameStateBase>(MyWorld->GetGameState());
+	MyGameInstance = Cast<UFartifactGameInstance>(MyWorld->GetGameInstance());
+
 
 
 	if (IsLocalPlayerController())
@@ -38,6 +50,125 @@ void AFartifactPlayerController::BeginPlay()
 			ConsoleWidget = Cast<UConsoleWidget>(CreateWidget<UUserWidget>(this, ConsoleClass));
 			if (ConsoleWidget)
 				ConsoleWidget->AddToViewport();
+		}
+	}
+}
+
+//Here we're going to lay out the board based on a board state
+void AFartifactPlayerController::MakeBoardChanges(FBoardState BoardState)
+{
+	if (!MyWorld)
+		return;
+	
+	TArray<FOwnedCardManager> PlayerHands = BoardState.player_hands;
+	TArray<FOwnedCardManager> BoardStates = BoardState.board_states;
+	
+
+	for (int i = PlayerHands[0].cards.cards.Num(); i < CurrentHandYoursCards.Num(); i++)
+	{
+		if (CurrentHandYoursCards[i] != nullptr)
+		{
+			CurrentHandYoursCards[i]->Destroy();
+			CurrentHandYoursCards[i] = nullptr;
+		}
+	}
+
+	for (int i = PlayerHands[1].cards.cards.Num(); i < CurrentHandTheirsCards.Num(); i++)
+	{
+		if (CurrentHandTheirsCards[i] != nullptr)
+		{
+			CurrentHandTheirsCards[i]->Destroy();
+			CurrentHandTheirsCards[i] = nullptr;
+		}
+	}
+
+
+
+	//First we iterate through the two sets of hands and spawn actors based on the cards
+	for (int i = 0; i < PlayerHands.Num(); i++)
+	{
+		FOwnedCardManager AHand = PlayerHands[i];
+
+		//HANDS
+		//then we go through the cards in the updated state and recreate or update any differences
+		for (int j = 0; j < AHand.cards.cards.Num(); j++)
+		{
+			if (j <= MyGameInstance->HandYoursPositions.Num())
+				return;
+
+			FCard ACard = AHand.cards.cards[j];
+
+			//your hand
+			if (i == 0)
+			{
+				if (CurrentHandYoursCards[j] != nullptr)
+				{
+					if (!(ACard == *(CurrentHandYoursCards[j]->CardInformation)))
+					{
+						CurrentHandYoursCards[j]->Destroy();
+						CurrentHandYoursCards[j] = MyWorld->SpawnActor<ACardActor>(MyGameInstance->HandYoursPositions[j]->GetActorLocation(), MyGameInstance->HandYoursPositions[j]->GetActorRotation());
+
+					}
+				}
+				else
+				{
+					CurrentHandYoursCards[j] = MyWorld->SpawnActor<ACardActor>(MyGameInstance->HandYoursPositions[j]->GetActorLocation(), MyGameInstance->HandYoursPositions[j]->GetActorRotation());
+				}
+					
+			}
+			//their hand
+			else if (i == 1)
+			{
+				if (CurrentHandTheirsCards[j] != nullptr)
+				{
+					if (!(ACard == *(CurrentHandTheirsCards[j]->CardInformation)))
+					{
+						CurrentHandTheirsCards[j]->Destroy();
+						CurrentHandTheirsCards[j] = MyWorld->SpawnActor<ACardActor>(MyGameInstance->HandTheirsPositions[j]->GetActorLocation(), MyGameInstance->HandTheirsPositions[j]->GetActorRotation());
+
+					}
+				}
+				else
+				{
+					CurrentHandTheirsCards[j] = MyWorld->SpawnActor<ACardActor>(MyGameInstance->HandTheirsPositions[j]->GetActorLocation(), MyGameInstance->HandTheirsPositions[j]->GetActorRotation());
+				}
+			}
+		}
+	}
+
+
+
+	//BOARD
+	// Now we go through each card in the board and place them based on their current ownership
+	for (int i = 0; i < BoardStates.Num(); i++)
+	{
+		FOwnedCardManager ABoardSlot = BoardStates[i];
+
+		//SLOTS
+		//now we go through managers for each card/empty position on the board and update the cards
+		if (ABoardSlot.owner == 0) // CHANGE THIS TO CHECK WHO OWNS INSTEAD OF == 0
+		{
+			for (int j = 0; j < ABoardSlot.cards.cards.Num(); j++)
+			{
+				if (j <= MyGameInstance->HandYoursPositions.Num())
+					return;
+
+				FCard ACard = ABoardSlot.cards.cards[j];
+				if (CurrentBoardYoursCards[i]->Pile[j] != nullptr)
+				{
+					if (!(ACard == *(CurrentBoardYoursCards[i]->Pile[j]->CardInformation)))
+					{
+						CurrentHandYoursCards[j] = MyWorld->SpawnActor<ACardActor>(MyGameInstance->HandYoursPositions[j]->GetActorLocation(), MyGameInstance->HandYoursPositions[j]->GetActorRotation());
+						CurrentHandYoursCards[j]->Destroy();
+					}
+				}
+				else
+				{
+					CurrentHandYoursCards[j] = MyWorld->SpawnActor<ACardActor>(MyGameInstance->HandYoursPositions[j]->GetActorLocation(), MyGameInstance->HandYoursPositions[j]->GetActorRotation());
+					
+				}
+			}
+
 		}
 	}
 }
@@ -114,101 +245,13 @@ bool AFartifactPlayerController::CommandToServer_Validate(const FString& AComman
 
 void AFartifactPlayerController::PlayerTick(float DeltaTime)
 {
-	Super::PlayerTick(DeltaTime);
-
-	// keep updating the destination every tick while desired
-	if (bMoveToMouseCursor)
-	{
-		MoveToMouseCursor();
-	}
 }
 
 void AFartifactPlayerController::SetupInputComponent()
 {
 	// set up gameplay key bindings
 	Super::SetupInputComponent();
-
-	InputComponent->BindAction("SetDestination", IE_Pressed, this, &AFartifactPlayerController::OnSetDestinationPressed);
-	InputComponent->BindAction("SetDestination", IE_Released, this, &AFartifactPlayerController::OnSetDestinationReleased);
 	InputComponent->BindAction("ToggleConsole", IE_Released, this, &AFartifactPlayerController::ToggleConsole);
-
-	// support touch devices 
-	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AFartifactPlayerController::MoveToTouchLocation);
-	InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &AFartifactPlayerController::MoveToTouchLocation);
-
-	InputComponent->BindAction("ResetVR", IE_Pressed, this, &AFartifactPlayerController::OnResetVR);
-}
-
-void AFartifactPlayerController::OnResetVR()
-{
-	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
-}
-
-void AFartifactPlayerController::MoveToMouseCursor()
-{
-	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
-	{
-		if (AFartifactCharacter* MyPawn = Cast<AFartifactCharacter>(GetPawn()))
-		{
-			if (MyPawn->GetCursorToWorld())
-			{
-				UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, MyPawn->GetCursorToWorld()->GetComponentLocation());
-			}
-		}
-	}
-	else
-	{
-		// Trace to see what is under the mouse cursor
-		FHitResult Hit;
-		GetHitResultUnderCursor(ECC_Visibility, false, Hit);
-
-		if (Hit.bBlockingHit)
-		{
-			// We hit something, move there
-			SetNewMoveDestination(Hit.ImpactPoint);
-		}
-	}
-}
-
-void AFartifactPlayerController::MoveToTouchLocation(const ETouchIndex::Type FingerIndex, const FVector Location)
-{
-	FVector2D ScreenSpaceLocation(Location);
-
-	// Trace to see what is under the touch location
-	FHitResult HitResult;
-	GetHitResultAtScreenPosition(ScreenSpaceLocation, CurrentClickTraceChannel, true, HitResult);
-	if (HitResult.bBlockingHit)
-	{
-		// We hit something, move there
-		SetNewMoveDestination(HitResult.ImpactPoint);
-	}
-}
-
-void AFartifactPlayerController::SetNewMoveDestination(const FVector DestLocation)
-{
-	APawn* const MyPawn = GetPawn();
-	if (MyPawn)
-	{
-		float const Distance = FVector::Dist(DestLocation, MyPawn->GetActorLocation());
-
-		// We need to issue move command only if far enough in order for walk animation to play correctly
-		if ((Distance > 120.0f))
-		{
-			UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, DestLocation);
-		}
-	}
-}
-
-void AFartifactPlayerController::OnSetDestinationPressed()
-{
-	// set flag to keep updating destination until released
-	bMoveToMouseCursor = true;
-}
-
-void AFartifactPlayerController::OnSetDestinationReleased()
-{
-	// clear flag to indicate we should stop updating the destination
-	bMoveToMouseCursor = false;
 }
 
 void AFartifactPlayerController::ToggleConsole()

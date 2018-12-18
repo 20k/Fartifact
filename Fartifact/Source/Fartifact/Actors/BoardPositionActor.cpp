@@ -6,7 +6,6 @@
 #include "Components/SceneComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Widgets/CardWidget.h"
-#include "Components/WidgetComponent.h"
 #include "Engine/World.h"
 #include "FartifactGameInstance.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -30,9 +29,9 @@ ABoardPositionActor::ABoardPositionActor()
 	PreviewWidget->SetRelativeRotation(FRotator(0, 180, 0));
 	PreviewWidget->SetRelativeScale3D(FVector(1, 0.2, 0.2));
 
-	/*HitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("HitBox"));
+	HitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("HitBox"));
 	HitBox->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
-	HitBox->SetRelativeScale3D(FVector(0.1, 2.3, 3.2));*/
+	HitBox->SetRelativeScale3D(FVector(0.1, 2.3, 3.2));
 
 
 }

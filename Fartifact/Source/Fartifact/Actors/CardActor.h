@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Actors/BoardPositionActor.h"
+#include "CardManager.h"
 
 
 #include "CardActor.generated.h"
@@ -22,11 +23,18 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
+public:
+	
+	FCard* CardInformation = nullptr;
 public:
 	EPosition Position;
+
+protected:
+
+	UPROPERTY(EditAnywhere)
+	class UWidgetComponent* PreviewWidget = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	class USceneComponent* SceneComponent = nullptr;
 
 };
