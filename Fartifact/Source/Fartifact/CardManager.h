@@ -8,10 +8,100 @@
 #include <vector>
 #include <string>
 #include <stdint.h>
+#include <type_traits>
 
 #include "Runtime/Core/Public/Containers/Map.h"
 
 #include "CardManager.generated.h"
+
+///this class is entirely unreal's fault
+///I legitimately cannot figure out how to get templates or FVariant or TUnion or the mythical TVariant to work
+///with replication. So we get this horrible horrible monstrosity. Also there's no replicating a TMap so that's why this class knows
+///its own property_type
+USTRUCT()
+struct FARTIFACT_API FCardState
+{
+	GENERATED_USTRUCT_BODY()
+
+	enum class property_type
+	{
+		ATTACK,
+		DEFENCE,
+		HEALTH,
+		DESCRIPTION,
+		COUNT
+	};
+
+	UPROPERTY()
+	int which = (int)property_type::COUNT;
+
+	enum class value_type
+	{
+		STRING,
+		INT,
+		DOUBLE,
+		COUNT
+	};
+
+	UPROPERTY()
+	int value_type_idx = (int)value_type::COUNT;
+
+	UPROPERTY()
+	FString sdata;
+	UPROPERTY()
+	int idata = 0;
+	UPROPERTY()
+	double ddata = 0;
+
+	template<typename T>
+	bool holds()
+	{
+		if (std::is_same_v<T, FString> && value_type_idx == (int)value_type::STRING)
+			return true;		
+		if (std::is_same_v<T, int> && value_type_idx == (int)value_type::INT)
+			return true;		
+		if (std::is_same_v<T, double> && value_type_idx == (int)value_type::DOUBLE)
+			return true;
+
+		return false;
+	}
+
+	template<typename T>
+	T& get()
+	{
+		if (!holds<T>())
+			throw std::runtime_error("Bad type access in crappy variant");
+
+		if constexpr (std::is_same_v<T, FString>)
+			return sdata
+		if constexpr (std::is_same_v<T, int>)
+			return idata
+		if constexpr (std::is_same_v<T, double>)
+			return ddata;
+	}
+
+	template<typename T>
+	void set(const T& in)
+	{
+		if constexpr (std::is_same_v<T, FString>)
+		{
+			sdata = in;
+			value_type_idx = (int)value_type::STRING;
+		}
+
+		if constexpr (std::is_same_v<T, int>)
+		{
+			idata = in;
+			value_type_idx = (int)value_type::INT;
+		}
+
+		if constexpr (std::is_same_v<T, double>)
+		{
+			ddata = in;
+			value_type_idx = (int)value_type::DOUBLE;
+		}
+	}
+};
 
 USTRUCT()
 struct FARTIFACT_API FCard
@@ -58,6 +148,9 @@ struct FARTIFACT_API FCard
 	
 	UPROPERTY()
 	uint64 owner_id = 0;
+
+	UPROPERTY()
+	TArray<FCardState> attributes;
 
 	bool IsOwnedBy(uint64 puser_id);
 	bool IsVisibleTo(uint64 puser_id);

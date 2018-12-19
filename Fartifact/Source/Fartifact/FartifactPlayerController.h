@@ -14,8 +14,8 @@ struct FCardArray
 {
 	GENERATED_BODY()
 
-		UPROPERTY()
-		TArray<ACardActor*> Pile;
+	UPROPERTY()
+	TArray<ACardActor*> Pile;
 
 	//FCardArray();
 };
