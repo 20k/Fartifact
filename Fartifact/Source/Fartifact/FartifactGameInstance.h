@@ -15,6 +15,10 @@ class FARTIFACT_API UFartifactGameInstance : public UGameInstance
 	GENERATED_BODY()
 
 public:
+	UFartifactGameInstance(const FObjectInitializer& ObjectInitializer);
+
+
+public:
 	TArray<class ABoardPositionActor*> HandYoursPositions;
 	TArray<class ABoardPositionActor*> HandTheirsPositions;
 	TArray<class ABoardPositionActor*> BoardYoursPositions;

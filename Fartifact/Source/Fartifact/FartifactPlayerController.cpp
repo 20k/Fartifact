@@ -14,6 +14,7 @@
 #include "Widgets/ConsoleWidget.h"
 #include "Engine/World.h"
 #include "FartifactGameMode.h"
+#include "MoveHandler.h"
 
 AFartifactPlayerController::AFartifactPlayerController()
 {
@@ -23,10 +24,12 @@ AFartifactPlayerController::AFartifactPlayerController()
 	ConstructorHelpers::FClassFinder<UUserWidget> ConsoleWidgetBPClass(TEXT("/Game/WidgetBlueprints/ConsoleWidget"));
 	ConsoleClass = ConsoleWidgetBPClass.Class;
 
-	CurrentHandYoursCards.SetNum(8);
-	CurrentHandTheirsCards.SetNum(8);
-	CurrentBoardYoursCards.SetNum(8);
-	CurrentBoardTheirsCards.SetNum(8);
+
+
+	/*YourHandActors.SetNum(8);
+	TheirHandActors.SetNum(8);
+	YourBoardActors.SetNum(8);
+	TheirBoardActors.SetNum(8);*/
 
 	
 }
@@ -52,125 +55,156 @@ void AFartifactPlayerController::BeginPlay()
 				ConsoleWidget->AddToViewport();
 		}
 	}
+	FetchGameStateFromServer();
 }
 
+void AFartifactPlayerController::MakeHandChanges(TArray<FCard> AHand, uint64 APlayer)
+{
+	TArray<ACardActor*>* HandActors = nullptr;
+	TArray<ABoardPositionActor*>* PositionActors = nullptr;
+
+	if (APlayer == player_id)
+	{
+		HandActors = &YourHandActors;
+		PositionActors = &MyGameInstance->HandYoursPositions;
+	}
+	else
+	{
+		HandActors = &TheirHandActors;
+		PositionActors = &MyGameInstance->HandTheirsPositions;
+	}
+
+	if (!HandActors || !PositionActors)
+		return;
+
+
+	//first we delete any extra actors currently on the board
+	if (HandActors->Num() > AHand.Num())
+	{
+		int TotalActors = HandActors->Num();
+		for (int i = AHand.Num(); i < TotalActors; i++)
+		{
+			(*HandActors)[i]->Destroy();
+		}
+		HandActors->SetNum(AHand.Num(), false);
+	}
+
+	//now we go through the hand state and remake any actors that arent correct
+	for (int i = 0; i < AHand.Num(); i++)
+	{
+		if (i < HandActors->Num())
+		{
+			if (!(AHand[i] == (*HandActors)[i]->CardInformation))
+			{
+				(*HandActors)[i]->Destroy();
+				(*HandActors)[i] = MyWorld->SpawnActor<ACardActor>((*PositionActors)[i]->GetActorLocation(), (*PositionActors)[i]->GetActorRotation());
+				(*HandActors)[i]->CardInformation = AHand[i];
+			}
+		}
+		else
+		{
+			ACardActor* ACardTemp = MyWorld->SpawnActor<ACardActor>((*PositionActors)[i]->GetActorLocation(), (*PositionActors)[i]->GetActorRotation());
+			ACardTemp->CardInformation = AHand[i];
+			HandActors->Add(ACardTemp);
+		}
+	}
+
+}
+
+void AFartifactPlayerController::MakeBoardChanges(TArray<FOwnedCardManager> ABoardSide, uint64 APlayer)
+{
+	TArray<FCardArray> BoardActors;
+	TArray<ABoardPositionActor*>* PositionActors = nullptr;
+
+	if (APlayer == player_id)
+	{
+		BoardActors = YourBoardActors;
+		PositionActors = &MyGameInstance->BoardYoursPositions;
+	}
+	else
+	{
+		BoardActors = TheirBoardActors;
+		PositionActors = &MyGameInstance->BoardTheirsPositions;
+	}
+
+	if (!PositionActors)
+		return;
+
+	//first we delete any extra piles and then remove extra actors in the remaining piles
+	if (BoardActors.Num() > ABoardSide.Num())
+	{
+		int TotalPiles = BoardActors.Num();
+
+		for (int i = ABoardSide.Num(); i < TotalPiles; i++)
+		{
+			for (ACardActor* ACard : BoardActors[i].Pile)
+			{
+				ACard->Destroy();
+
+			}
+			BoardActors[i].Pile.Empty();
+		}
+
+	}
+	BoardActors.SetNum(ABoardSide.Num(), false);
+
+
+	//now we delete any extra actors in each pile
+	for (int i = 0; i < BoardActors.Num(); i++)
+	{
+		if (BoardActors[i].Pile.Num() > ABoardSide[i].cards.cards.Num())
+		{
+			int TotalActors = BoardActors[i].Pile.Num();
+			for (int j = ABoardSide[i].cards.cards.Num(); j < TotalActors; j++)
+			{
+				BoardActors[i].Pile[j]->Destroy();
+			}
+			BoardActors[i].Pile.SetNum(ABoardSide[i].cards.cards.Num(), false);
+		}
+	}
+
+
+	//now we go through the differences between the board state and the current actors and remake or add any necessary actors
+
+	for (int i = 0; i < ABoardSide.Num(); i++)
+	{
+		for (int j = 0; j < ABoardSide[i].cards.cards.Num(); j++)
+		{
+			if (j < BoardActors[i].Pile.Num())
+			{
+				if (!(BoardActors[i].Pile[j]->CardInformation == ABoardSide[i].cards.cards[j]))
+				{
+					BoardActors[i].Pile[j]->Destroy();
+					BoardActors[i].Pile[j] = MyWorld->SpawnActor<ACardActor>((*PositionActors)[i]->GetActorLocation(), (*PositionActors)[i]->GetActorRotation());
+					BoardActors[i].Pile[j]->CardInformation = ABoardSide[i].cards.cards[j];
+				}
+			}
+			else
+			{
+				ACardActor* TempActor = MyWorld->SpawnActor<ACardActor>((*PositionActors)[i]->GetActorLocation(), (*PositionActors)[i]->GetActorRotation());
+				TempActor->CardInformation = ABoardSide[i].cards.cards[j];
+				BoardActors[i].Pile.Add(TempActor);
+			}
+		}
+	}
+}
+
+
 //Here we're going to lay out the board based on a board state
-void AFartifactPlayerController::MakeBoardChanges(FBoardState BoardState)
+void AFartifactPlayerController::MakeStateChanges(FBoardState BoardState)
 {
 	if (!MyWorld)
 		return;
 	
-	TArray<FOwnedCardManager> PlayerHands = BoardState.player_hands;
-	TArray<FOwnedCardManager> BoardStates = BoardState.board_states;
-	
+	TArray<FCard> YourHand = (BoardState.GetCardsFor(FBoardState::board_states::HANDS, player_id))[0].cards.cards;
+	TArray<FCard> TheirHand = (BoardState.GetCardsFor(FBoardState::board_states::HANDS, their_player_id))[0].cards.cards;
+	TArray<FOwnedCardManager> YourBoard = BoardState.GetCardsFor(FBoardState::board_states::BOARD, player_id);
+	TArray<FOwnedCardManager> TheirBoard = BoardState.GetCardsFor(FBoardState::board_states::BOARD, their_player_id);
 
-	for (int i = PlayerHands[0].cards.cards.Num(); i < CurrentHandYoursCards.Num(); i++)
-	{
-		if (CurrentHandYoursCards[i] != nullptr)
-		{
-			CurrentHandYoursCards[i]->Destroy();
-			CurrentHandYoursCards[i] = nullptr;
-		}
-	}
-
-	for (int i = PlayerHands[1].cards.cards.Num(); i < CurrentHandTheirsCards.Num(); i++)
-	{
-		if (CurrentHandTheirsCards[i] != nullptr)
-		{
-			CurrentHandTheirsCards[i]->Destroy();
-			CurrentHandTheirsCards[i] = nullptr;
-		}
-	}
-
-
-
-	//First we iterate through the two sets of hands and spawn actors based on the cards
-	for (int i = 0; i < PlayerHands.Num(); i++)
-	{
-		FOwnedCardManager AHand = PlayerHands[i];
-
-		//HANDS
-		//then we go through the cards in the updated state and recreate or update any differences
-		for (int j = 0; j < AHand.cards.cards.Num(); j++)
-		{
-			if (j <= MyGameInstance->HandYoursPositions.Num())
-				return;
-
-			FCard ACard = AHand.cards.cards[j];
-
-			//your hand
-			if (i == 0)
-			{
-				if (CurrentHandYoursCards[j] != nullptr)
-				{
-					if (!(ACard == *(CurrentHandYoursCards[j]->CardInformation)))
-					{
-						CurrentHandYoursCards[j]->Destroy();
-						CurrentHandYoursCards[j] = MyWorld->SpawnActor<ACardActor>(MyGameInstance->HandYoursPositions[j]->GetActorLocation(), MyGameInstance->HandYoursPositions[j]->GetActorRotation());
-
-					}
-				}
-				else
-				{
-					CurrentHandYoursCards[j] = MyWorld->SpawnActor<ACardActor>(MyGameInstance->HandYoursPositions[j]->GetActorLocation(), MyGameInstance->HandYoursPositions[j]->GetActorRotation());
-				}
-					
-			}
-			//their hand
-			else if (i == 1)
-			{
-				if (CurrentHandTheirsCards[j] != nullptr)
-				{
-					if (!(ACard == *(CurrentHandTheirsCards[j]->CardInformation)))
-					{
-						CurrentHandTheirsCards[j]->Destroy();
-						CurrentHandTheirsCards[j] = MyWorld->SpawnActor<ACardActor>(MyGameInstance->HandTheirsPositions[j]->GetActorLocation(), MyGameInstance->HandTheirsPositions[j]->GetActorRotation());
-
-					}
-				}
-				else
-				{
-					CurrentHandTheirsCards[j] = MyWorld->SpawnActor<ACardActor>(MyGameInstance->HandTheirsPositions[j]->GetActorLocation(), MyGameInstance->HandTheirsPositions[j]->GetActorRotation());
-				}
-			}
-		}
-	}
-
-
-
-	//BOARD
-	// Now we go through each card in the board and place them based on their current ownership
-	for (int i = 0; i < BoardStates.Num(); i++)
-	{
-		FOwnedCardManager ABoardSlot = BoardStates[i];
-
-		//SLOTS
-		//now we go through managers for each card/empty position on the board and update the cards
-		if (ABoardSlot.owner == 0) // CHANGE THIS TO CHECK WHO OWNS INSTEAD OF == 0
-		{
-			for (int j = 0; j < ABoardSlot.cards.cards.Num(); j++)
-			{
-				if (j <= MyGameInstance->HandYoursPositions.Num())
-					return;
-
-				FCard ACard = ABoardSlot.cards.cards[j];
-				if (CurrentBoardYoursCards[i]->Pile[j] != nullptr)
-				{
-					if (!(ACard == *(CurrentBoardYoursCards[i]->Pile[j]->CardInformation)))
-					{
-						CurrentHandYoursCards[j] = MyWorld->SpawnActor<ACardActor>(MyGameInstance->HandYoursPositions[j]->GetActorLocation(), MyGameInstance->HandYoursPositions[j]->GetActorRotation());
-						CurrentHandYoursCards[j]->Destroy();
-					}
-				}
-				else
-				{
-					CurrentHandYoursCards[j] = MyWorld->SpawnActor<ACardActor>(MyGameInstance->HandYoursPositions[j]->GetActorLocation(), MyGameInstance->HandYoursPositions[j]->GetActorRotation());
-					
-				}
-			}
-
-		}
-	}
+	MakeHandChanges(YourHand, player_id);
+	MakeHandChanges(TheirHand, their_player_id);
+	MakeBoardChanges(YourBoard, player_id);
+	MakeBoardChanges(TheirBoard, their_player_id);
 }
 
 void AFartifactPlayerController::PreSendCommand(FString ACommand)
@@ -194,14 +228,44 @@ void AFartifactPlayerController::PreSendCommand(FString ACommand)
 
 		if (ACommand == "Fetch")
 		{
-			FetchGameStateFromServer();
+			PreFetchGameStateFromServer();
 		}
 
-		FString ExtraString = "Client: ";
-		ExtraString.Append(ACommand);
+		if (ACommand == "Draw")
+		{
+			DrawCard();
+		}
 
+		if (ACommand == "Play")
+		{
+			PlayCard(0);
+		}
+
+		FString ExtraString = FString::Printf(TEXT("Client %d : %s"), player_id, *ACommand);
+
+		
+		PreFetchGameStateFromServer();
 		CommandToServer(ExtraString);
 	}
+}
+
+void AFartifactPlayerController::PreFetchGameStateFromServer_Implementation()
+{
+	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		AFartifactPlayerController* AController = nullptr;
+		AController = Cast<AFartifactPlayerController>(Iterator->Get());
+		if (AController)
+		{
+			AController->FetchGameStateFromServer();
+
+		}
+	}
+}
+
+bool AFartifactPlayerController::PreFetchGameStateFromServer_Validate()
+{
+	return true;
 }
 
 bool AFartifactPlayerController::FetchGameStateFromServer_Validate()
@@ -213,20 +277,40 @@ void AFartifactPlayerController::FetchGameStateFromServer_Implementation()
 {
 	if (GetWorld() == nullptr)
 		return;
-
-	if (GetWorld()->GetAuthGameMode() == nullptr)
-		return;
-
+	
 	auto game_mode = GetWorld()->GetAuthGameMode();
 
-	FBoardState all = ((AFartifactGameMode*)game_mode)->test_board_state;
+	if (game_mode == nullptr)
+		return;
 
-	ReceiveGameState(all);
+	FBoardState all = ((AFartifactGameMode*)game_mode)->board_state;
+
+	//UE_LOG(LogTemp, Warning, TEXT("%i"), all.all_cards.Num());
+
+	//UE_LOG(LogTemp, Warning, TEXT("Server: %i"), all.all_cards[(int)FBoardState::board_states::DECKS].owned.Num());
+
+	ReceiveGameState(all.HideByVisibility(player_id), player_id);
 }
 
-void AFartifactPlayerController::ReceiveGameState_Implementation(FBoardState board_state)
+void AFartifactPlayerController::ReceiveGameState_Implementation(FBoardState board_state, uint64 my_id)
 {
+	player_id = my_id;
+
+	for (uint64 Player : board_state.players)
+	{
+		if (Player != player_id)
+		{
+			their_player_id = Player;
+			break;
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("%i"), board_state.all_cards.Num());
+	UE_LOG(LogTemp, Warning, TEXT("%i"), board_state.all_cards[(int)FBoardState::board_states::DECKS].owned.Num());
+
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *(board_state.Debug()));
+
+	MakeStateChanges(board_state);
 }
 
 void AFartifactPlayerController::CommandToServer_Implementation(const FString& ACommand)
@@ -241,6 +325,68 @@ void AFartifactPlayerController::CommandToServer_Implementation(const FString& A
 bool AFartifactPlayerController::CommandToServer_Validate(const FString& ACommand)
 {
 	return true;
+}
+
+bool AFartifactPlayerController::DrawCard_Validate()
+{
+	return true;
+}
+
+void AFartifactPlayerController::DrawCard_Implementation()
+{
+	if (GetWorld() == nullptr)
+		return;
+
+	auto game_mode = GetWorld()->GetAuthGameMode();
+
+	if (game_mode == nullptr)
+		return;
+
+	FBoardState& all = ((AFartifactGameMode*)game_mode)->board_state;
+
+	UE_LOG(LogTemp, Warning, TEXT("PLAYER WITH ID %i"), (int32)player_id);
+
+	FCardMove mv;
+	///0 is a stand in for whatever my id  is
+	mv.MakeDraw(all, player_id);
+
+	FMoveResult res = MoveHandler::Play(all, mv, player_id);
+
+	UE_LOG(LogTemp, Warning, TEXT("Server success %i %s\n"), res.success, *res.reason);
+
+	if (!res.success)
+		return;
+	else
+		all = res.result;
+}
+
+bool AFartifactPlayerController::PlayCard_Validate(int pcard_offset)
+{
+	return true;
+}
+
+void AFartifactPlayerController::PlayCard_Implementation(int pcard_offset)
+{
+	if (GetWorld() == nullptr)
+		return;
+
+	auto game_mode = GetWorld()->GetAuthGameMode();
+
+	if (game_mode == nullptr)
+		return;
+
+	FBoardState& all = ((AFartifactGameMode*)game_mode)->board_state;
+
+	FCardMove mv;
+	///0 is a stand in for whatever my id  is
+	mv.MakePlay(all, player_id, pcard_offset);
+
+	FMoveResult res = MoveHandler::Play(all, mv, player_id);
+
+	if (!res.success)
+		return;
+	else
+		all = res.result;
 }
 
 void AFartifactPlayerController::PlayerTick(float DeltaTime)

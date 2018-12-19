@@ -22,7 +22,7 @@ ACardActor::ACardActor()
 
 
 
-	PreviewWidget->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+	PreviewWidget->SetupAttachment(RootComponent);
 	PreviewWidget->SetDrawAtDesiredSize(true);
 	PreviewWidget->SetWidgetClass(CardClass.Class);
 	PreviewWidget->SetMaterial(0, FoundMaterial.Object);

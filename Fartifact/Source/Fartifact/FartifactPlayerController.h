@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "CardManager.h"
+#include "Actors/CardActor.h"
+
 #include "FartifactPlayerController.generated.h"
 
 USTRUCT()
@@ -13,7 +15,9 @@ struct FCardArray
 	GENERATED_BODY()
 
 		UPROPERTY()
-		TArray<class ACardActor*> Pile;
+		TArray<ACardActor*> Pile;
+
+	//FCardArray();
 };
 
 UCLASS()
@@ -23,20 +27,30 @@ class AFartifactPlayerController : public APlayerController
 
 public:
 	AFartifactPlayerController();
-	
+
+	uint64 player_id = 0;
+	uint64 their_player_id = 0;
 	UFUNCTION(Server, Reliable, WithValidation)
 	void CommandToServer(const FString& ACommand);
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void DrawCard();
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void PlayCard(int pcard_offset);
 
 	void PreSendCommand(FString ACommand);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void FetchGameStateFromServer();
+	
+	UFUNCTION(Server, Reliable, WithValidation)
+	void PreFetchGameStateFromServer();
 
 	UFUNCTION(Client, Reliable)
-	void ReceiveGameState(FBoardState board_state);
+	void ReceiveGameState(FBoardState board_state, uint64 my_id);
 
-	void MakeBoardChanges(FBoardState BoardState);
+	void MakeStateChanges(FBoardState BoardState);
 
 
 protected:
@@ -45,6 +59,8 @@ protected:
 
 	virtual void BeginPlay() override;
 
+	void MakeHandChanges(TArray<FCard> AHand, uint64 APlayer);
+	void MakeBoardChanges(TArray<FOwnedCardManager> ABoardSide, uint64 APlayer);
 	// Begin PlayerController interface
 	virtual void PlayerTick(float DeltaTime) override;
 	virtual void SetupInputComponent() override;
@@ -58,7 +74,6 @@ protected:
 	class AFartifactGameStateBase* MyGameState = nullptr;
 	class UWorld* MyWorld = nullptr;
 	class UFartifactGameInstance* MyGameInstance = nullptr;
-	int64 player_id;
 	int HandSize = 8;
 	int BoardSize = 8;
 
@@ -67,12 +82,14 @@ public:
 
 	FBoardState CurrentBoardState;
 	//array of actors for each hand
-	TArray<class ACardActor*> CurrentHandYoursCards;
-	TArray<class ACardActor*> CurrentHandTheirsCards;
+	TArray<class ACardActor*> YourHandActors;
+	TArray<class ACardActor*> TheirHandActors;
 
 	//array of arrays for each pile on the board
-	TArray<FCardArray*> CurrentBoardYoursCards;
-	TArray<FCardArray*> CurrentBoardTheirsCards;
+	UPROPERTY()
+	TArray<FCardArray> YourBoardActors;
+	UPROPERTY()
+	TArray<FCardArray> TheirBoardActors;
 
 };
 

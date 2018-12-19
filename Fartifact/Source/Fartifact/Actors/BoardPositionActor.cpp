@@ -22,15 +22,16 @@ ABoardPositionActor::ABoardPositionActor()
 	
 
 
-	PreviewWidget->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+	PreviewWidget->SetupAttachment(RootComponent);
 	PreviewWidget->SetDrawAtDesiredSize(true);
 	PreviewWidget->SetWidgetClass(CardClass.Class);
 	PreviewWidget->SetMaterial(0, FoundMaterial.Object);
 	PreviewWidget->SetRelativeRotation(FRotator(0, 180, 0));
 	PreviewWidget->SetRelativeScale3D(FVector(1, 0.2, 0.2));
+	PreviewWidget->SetHiddenInGame(true);
 
 	HitBox = CreateDefaultSubobject<UBoxComponent>(TEXT("HitBox"));
-	HitBox->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+	HitBox->SetupAttachment(RootComponent);
 	HitBox->SetRelativeScale3D(FVector(0.1, 2.3, 3.2));
 
 
@@ -49,13 +50,17 @@ void ABoardPositionActor::BeginPlay()
 		switch (Position)
 		{
 			case EPosition::HandYours:
-				MyGameInstance->HandYoursPositions.Insert(this, MyIndex);
+				MyGameInstance->HandYoursPositions[MyIndex] = this;
+				break;
 			case EPosition::HandTheirs:
-				MyGameInstance->HandYoursPositions.Insert(this, MyIndex);
+				MyGameInstance->HandTheirsPositions[MyIndex] = this;
+				break;
 			case EPosition::BoardYours:
-				MyGameInstance->BoardYoursPositions.Insert(this, MyIndex);
+				MyGameInstance->BoardYoursPositions[MyIndex] = this;
+				break;
 			case EPosition::BoardTheirs:
-				MyGameInstance->BoardTheirsPositions.Insert(this, MyIndex);
+				MyGameInstance->BoardTheirsPositions[MyIndex] = this;
+				break;
 		}
 	}
 

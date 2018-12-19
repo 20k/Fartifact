@@ -25,7 +25,7 @@ protected:
 
 public:
 	
-	FCard* CardInformation = nullptr;
+	FCard CardInformation;
 public:
 	EPosition Position;
 
