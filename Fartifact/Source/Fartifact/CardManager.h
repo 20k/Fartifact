@@ -19,21 +19,9 @@
 ///with replication. So we get this horrible horrible monstrosity. Also there's no replicating a TMap so that's why this class knows
 ///its own property_type
 USTRUCT()
-struct FARTIFACT_API FCardState
+struct FARTIFACT_API FCardVal
 {
 	GENERATED_USTRUCT_BODY()
-
-	enum class property_type
-	{
-		ATTACK,
-		DEFENCE,
-		HEALTH,
-		DESCRIPTION,
-		COUNT
-	};
-
-	UPROPERTY()
-	int which = (int)property_type::COUNT;
 
 	enum class value_type
 	{
@@ -101,6 +89,27 @@ struct FARTIFACT_API FCardState
 			value_type_idx = (int)value_type::DOUBLE;
 		}
 	}
+};
+
+USTRUCT()
+struct FARTIFACT_API FCardState
+{
+	GENERATED_USTRUCT_BODY()
+
+	enum class property_type
+	{
+		ATTACK,
+		DEFENCE,
+		HEALTH,
+		DESCRIPTION,
+		COUNT
+	};
+
+	UPROPERTY()
+	int which = (int)property_type::COUNT;
+
+	UPROPERTY()
+	FCardVal val;
 };
 
 USTRUCT()
