@@ -123,18 +123,8 @@ struct FARTIFACT_API FCard
 	enum class type : uint8
 	{
 		UNKNOWN = 0,
-		AMERICAN_DOLLAR,
-		POUND,
-		DONG,
-		RUBLE,
-		EURO,
-		PESO,
-		RUPEE,
-		BUTTONS,
-		CANADIAN_DOLLAR,
-		AUSTRALIAN_DOLLARYDOO,
-		ZIMBABWEAN_DOLLARS,
-		YUAN,
+		MONEY,
+		SPELL, ///placeholder
 		COUNT,
 		NONE
 	};

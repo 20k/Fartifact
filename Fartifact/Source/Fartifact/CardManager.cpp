@@ -6,18 +6,8 @@
 std::vector<FString> FCard::short_names
 {
 	"X",
-	"$",
-	"£",
-	"₫",
-	"₽",
-	"€",
-	"₱",
-	"₹",
-	"B",
-	"🥞",
-	"🦘",
-	"Z$",
-	"¥"
+	"M",
+	"S",
 	"ERR",
 	"ERR"
 };
@@ -26,18 +16,8 @@ std::vector<FString> FCard::short_names
 std::vector<FString> long_names
 {
 	"ARMOK",
-	"Dollar",
-	"Pound",
-	"Dong",
-	"Ruble",
-	"Euro",
-	"Peso",
-	"Rupee",
-	"Buttons",
-	"CDollar",
-	"ADollary",
-	"ZDollar",
-	"Yuan",
+	"MONEY",
+	"SPELL",
 	"COUNT",
 	"NONE"
 };
