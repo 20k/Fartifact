@@ -101,6 +101,7 @@ struct FARTIFACT_API FCardState
 		ATTACK,
 		DEFENCE,
 		HEALTH,
+		NAME,
 		DESCRIPTION,
 		COUNT
 	};
@@ -150,6 +151,32 @@ struct FARTIFACT_API FCard
 
 	UPROPERTY()
 	TArray<FCardState> attributes;
+
+	template<typename T>
+	void AddProp(FCardState::property_type ptype, const T& val)
+	{
+		FCardState cs;
+		cs.which = (int)ptype;
+		cs.val.set<T>(val);
+
+		attributes.Add(cs);
+	}
+
+	///if the second member is false, we didn't find the property
+	///essentially returns a crappy optional but there's no optional in ue4 atm
+	template<typename T>
+	TPair<T, bool> GetProp(FCardState::property_type ptype)
+	{
+		for (FCardState& cs : attributes)
+		{
+			if (cs.which == (int)ptype)
+			{
+				return { cs.get<T>(), true };
+			}
+		}
+
+		return {T(), false};
+	}
 
 	bool IsOwnedBy(uint64 puser_id);
 	bool IsVisibleTo(uint64 puser_id);
