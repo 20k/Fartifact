@@ -75,19 +75,24 @@ struct FARTIFACT_API FCardVal
 		{
 			sdata = in;
 			value_type_idx = (int)value_type::STRING;
+			return;
 		}
 
 		if constexpr (std::is_same_v<T, int>)
 		{
 			idata = in;
 			value_type_idx = (int)value_type::INT;
+			return;
 		}
 
 		if constexpr (std::is_same_v<T, double>)
 		{
 			ddata = in;
 			value_type_idx = (int)value_type::DOUBLE;
+			return;
 		}
+
+		throw std::runtime_error("Bad idx");
 	}
 };
 
@@ -171,11 +176,26 @@ struct FARTIFACT_API FCard
 		{
 			if (cs.which == (int)ptype)
 			{
-				return { cs.get<T>(), true };
+				return { cs.val.get<T>(), true };
 			}
 		}
 
 		return {T(), false};
+	}
+
+	template<typename T>
+	void SetProp(FCardState::property_type ptype, const T& val)
+	{
+		for (FCardState& cs : attributes)
+		{
+			if (cs.which == (int)ptype)
+			{
+				cs.val.set<T>(val);
+				return;
+			}
+		}
+
+		AddProp(ptype, val);
 	}
 
 	bool IsOwnedBy(uint64 puser_id);
